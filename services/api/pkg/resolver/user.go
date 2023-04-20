@@ -7,9 +7,16 @@ package resolver
 import (
 	"context"
 	"things-api/ent"
+
+	"github.com/google/uuid"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput) (*ent.User, error) {
 	return r.client.User.Create().SetInput(input).Save(ctx)
+}
+
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input ent.UpdateUserInput) (*ent.User, error) {
+	return r.client.User.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
 }

@@ -6,14 +6,20 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 	"things-api/ent"
 	"things-api/graph/generated"
+
+	"github.com/google/uuid"
 )
 
 // CreateLocation is the resolver for the createLocation field.
 func (r *mutationResolver) CreateLocation(ctx context.Context, input ent.CreateLocationInput) (*ent.Location, error) {
-	panic(fmt.Errorf("not implemented: CreateLocation - createLocation"))
+	return r.client.Location.Create().SetInput(input).Save(ctx)
+}
+
+// UpdateLocation is the resolver for the updateLocation field.
+func (r *mutationResolver) UpdateLocation(ctx context.Context, id string, input ent.UpdateLocationInput) (*ent.Location, error) {
+	return r.client.Location.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.
