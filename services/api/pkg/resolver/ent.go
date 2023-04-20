@@ -17,12 +17,12 @@ import (
 
 // ID is the resolver for the id field.
 func (r *locationResolver) ID(ctx context.Context, obj *ent.Location) (string, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
+	return obj.ID.String(), nil
 }
 
 // ParentID is the resolver for the parentID field.
 func (r *locationResolver) ParentID(ctx context.Context, obj *ent.Location) (*string, error) {
-	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+	return util.StringPtr(obj.ParentID.String()), nil
 }
 
 // Node is the resolver for the node field.
@@ -37,7 +37,7 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []string) ([]ent.Noder, e
 
 // Locations is the resolver for the locations field.
 func (r *queryResolver) Locations(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.LocationWhereInput) (*ent.LocationConnection, error) {
-	panic(fmt.Errorf("not implemented: Locations - locations"))
+	return r.client.Location.Query().Paginate(ctx, after, first, before, last, ent.WithLocationFilter(where.Filter))
 }
 
 // Users is the resolver for the users field.
