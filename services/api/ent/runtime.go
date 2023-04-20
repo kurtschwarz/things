@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"things-api/ent/location"
 	"things-api/ent/schema"
 	"things-api/ent/user"
 
@@ -13,6 +14,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	locationFields := schema.Location{}.Fields()
+	_ = locationFields
+	// locationDescID is the schema descriptor for id field.
+	locationDescID := locationFields[0].Descriptor()
+	// location.DefaultID holds the default value on creation for the id field.
+	location.DefaultID = locationDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescID is the schema descriptor for id field.

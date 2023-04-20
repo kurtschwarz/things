@@ -8,6 +8,26 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+func (l *Location) Parent(ctx context.Context) (*Location, error) {
+	result, err := l.Edges.ParentOrErr()
+	if IsNotLoaded(err) {
+		result, err = l.QueryParent().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (l *Location) Children(ctx context.Context) (result []*Location, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = l.NamedChildren(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = l.Edges.ChildrenOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = l.QueryChildren().All(ctx)
+	}
+	return result, err
+}
+
 func (u *User) Parent(ctx context.Context) (*User, error) {
 	result, err := u.Edges.ParentOrErr()
 	if IsNotLoaded(err) {

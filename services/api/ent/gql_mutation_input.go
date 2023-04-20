@@ -6,6 +6,80 @@ import (
 	"github.com/google/uuid"
 )
 
+// CreateLocationInput represents a mutation input for creating locations.
+type CreateLocationInput struct {
+	Name     *string
+	ParentID *uuid.UUID
+	ChildIDs []uuid.UUID
+}
+
+// Mutate applies the CreateLocationInput on the LocationMutation builder.
+func (i *CreateLocationInput) Mutate(m *LocationMutation) {
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if v := i.ParentID; v != nil {
+		m.SetParentID(*v)
+	}
+	if v := i.ChildIDs; len(v) > 0 {
+		m.AddChildIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the CreateLocationInput on the LocationCreate builder.
+func (c *LocationCreate) SetInput(i CreateLocationInput) *LocationCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateLocationInput represents a mutation input for updating locations.
+type UpdateLocationInput struct {
+	ClearName      bool
+	Name           *string
+	ClearParent    bool
+	ParentID       *uuid.UUID
+	ClearChildren  bool
+	AddChildIDs    []uuid.UUID
+	RemoveChildIDs []uuid.UUID
+}
+
+// Mutate applies the UpdateLocationInput on the LocationMutation builder.
+func (i *UpdateLocationInput) Mutate(m *LocationMutation) {
+	if i.ClearName {
+		m.ClearName()
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if i.ClearParent {
+		m.ClearParent()
+	}
+	if v := i.ParentID; v != nil {
+		m.SetParentID(*v)
+	}
+	if i.ClearChildren {
+		m.ClearChildren()
+	}
+	if v := i.AddChildIDs; len(v) > 0 {
+		m.AddChildIDs(v...)
+	}
+	if v := i.RemoveChildIDs; len(v) > 0 {
+		m.RemoveChildIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateLocationInput on the LocationUpdate builder.
+func (c *LocationUpdate) SetInput(i UpdateLocationInput) *LocationUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateLocationInput on the LocationUpdateOne builder.
+func (c *LocationUpdateOne) SetInput(i UpdateLocationInput) *LocationUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
 	Name     *string

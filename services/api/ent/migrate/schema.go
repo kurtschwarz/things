@@ -8,6 +8,26 @@ import (
 )
 
 var (
+	// LocationsColumns holds the columns for the "locations" table.
+	LocationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// LocationsTable holds the schema information for the "locations" table.
+	LocationsTable = &schema.Table{
+		Name:       "locations",
+		Columns:    LocationsColumns,
+		PrimaryKey: []*schema.Column{LocationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "locations_locations_children",
+				Columns:    []*schema.Column{LocationsColumns[2]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -30,10 +50,12 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		LocationsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	LocationsTable.ForeignKeys[0].RefTable = LocationsTable
 	UsersTable.ForeignKeys[0].RefTable = UsersTable
 }

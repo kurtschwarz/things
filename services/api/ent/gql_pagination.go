@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"errors"
+	"things-api/ent/location"
 	"things-api/ent/user"
 
 	"entgo.io/contrib/entgql"
@@ -94,6 +95,248 @@ func paginateLimit(first, last *int) int {
 		limit = *last + 1
 	}
 	return limit
+}
+
+// LocationEdge is the edge representation of Location.
+type LocationEdge struct {
+	Node   *Location `json:"node"`
+	Cursor Cursor    `json:"cursor"`
+}
+
+// LocationConnection is the connection containing edges to Location.
+type LocationConnection struct {
+	Edges      []*LocationEdge `json:"edges"`
+	PageInfo   PageInfo        `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
+func (c *LocationConnection) build(nodes []*Location, pager *locationPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Location
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Location {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Location {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*LocationEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &LocationEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// LocationPaginateOption enables pagination customization.
+type LocationPaginateOption func(*locationPager) error
+
+// WithLocationOrder configures pagination ordering.
+func WithLocationOrder(order *LocationOrder) LocationPaginateOption {
+	if order == nil {
+		order = DefaultLocationOrder
+	}
+	o := *order
+	return func(pager *locationPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultLocationOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithLocationFilter configures pagination filter.
+func WithLocationFilter(filter func(*LocationQuery) (*LocationQuery, error)) LocationPaginateOption {
+	return func(pager *locationPager) error {
+		if filter == nil {
+			return errors.New("LocationQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type locationPager struct {
+	reverse bool
+	order   *LocationOrder
+	filter  func(*LocationQuery) (*LocationQuery, error)
+}
+
+func newLocationPager(opts []LocationPaginateOption, reverse bool) (*locationPager, error) {
+	pager := &locationPager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultLocationOrder
+	}
+	return pager, nil
+}
+
+func (p *locationPager) applyFilter(query *LocationQuery) (*LocationQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *locationPager) toCursor(l *Location) Cursor {
+	return p.order.Field.toCursor(l)
+}
+
+func (p *locationPager) applyCursors(query *LocationQuery, after, before *Cursor) (*LocationQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultLocationOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *locationPager) applyOrder(query *LocationQuery) *LocationQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultLocationOrder.Field {
+		query = query.Order(DefaultLocationOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	return query
+}
+
+func (p *locationPager) orderExpr(query *LocationQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultLocationOrder.Field {
+			b.Comma().Ident(DefaultLocationOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Location.
+func (l *LocationQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...LocationPaginateOption,
+) (*LocationConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newLocationPager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if l, err = pager.applyFilter(l); err != nil {
+		return nil, err
+	}
+	conn := &LocationConnection{Edges: []*LocationEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = l.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	if l, err = pager.applyCursors(l, after, before); err != nil {
+		return nil, err
+	}
+	l = pager.applyOrder(l)
+	if limit := paginateLimit(first, last); limit != 0 {
+		l.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := l.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := l.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// LocationOrderField defines the ordering field of Location.
+type LocationOrderField struct {
+	// Value extracts the ordering value from the given Location.
+	Value    func(*Location) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) location.OrderOption
+	toCursor func(*Location) Cursor
+}
+
+// LocationOrder defines the ordering of Location.
+type LocationOrder struct {
+	Direction OrderDirection      `json:"direction"`
+	Field     *LocationOrderField `json:"field"`
+}
+
+// DefaultLocationOrder is the default ordering of Location.
+var DefaultLocationOrder = &LocationOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &LocationOrderField{
+		Value: func(l *Location) (ent.Value, error) {
+			return l.ID, nil
+		},
+		column: location.FieldID,
+		toTerm: location.ByID,
+		toCursor: func(l *Location) Cursor {
+			return Cursor{ID: l.ID}
+		},
+	},
+}
+
+// ToEdge converts Location into LocationEdge.
+func (l *Location) ToEdge(order *LocationOrder) *LocationEdge {
+	if order == nil {
+		order = DefaultLocationOrder
+	}
+	return &LocationEdge{
+		Node:   l,
+		Cursor: order.Field.toCursor(l),
+	}
 }
 
 // UserEdge is the edge representation of User.

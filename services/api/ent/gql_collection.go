@@ -4,11 +4,108 @@ package ent
 
 import (
 	"context"
+	"things-api/ent/location"
 	"things-api/ent/user"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
 )
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (l *LocationQuery) CollectFields(ctx context.Context, satisfies ...string) (*LocationQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return l, nil
+	}
+	if err := l.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return l, nil
+}
+
+func (l *LocationQuery) collectField(ctx context.Context, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(location.Columns))
+		selectedFields = []string{location.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+		case "parent":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&LocationClient{config: l.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			l.withParent = query
+			if _, ok := fieldSeen[location.FieldParentID]; !ok {
+				selectedFields = append(selectedFields, location.FieldParentID)
+				fieldSeen[location.FieldParentID] = struct{}{}
+			}
+		case "children":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&LocationClient{config: l.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			l.WithNamedChildren(alias, func(wq *LocationQuery) {
+				*wq = *query
+			})
+		case "parentID":
+			if _, ok := fieldSeen[location.FieldParentID]; !ok {
+				selectedFields = append(selectedFields, location.FieldParentID)
+				fieldSeen[location.FieldParentID] = struct{}{}
+			}
+		case "name":
+			if _, ok := fieldSeen[location.FieldName]; !ok {
+				selectedFields = append(selectedFields, location.FieldName)
+				fieldSeen[location.FieldName] = struct{}{}
+			}
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		l.Select(selectedFields...)
+	}
+	return nil
+}
+
+type locationPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []LocationPaginateOption
+}
+
+func newLocationPaginateArgs(rv map[string]interface{}) *locationPaginateArgs {
+	args := &locationPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*LocationWhereInput); ok {
+		args.opts = append(args.opts, WithLocationFilter(v.Filter))
+	}
+	return args
+}
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (u *UserQuery) CollectFields(ctx context.Context, satisfies ...string) (*UserQuery, error) {

@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Location is the predicate function for location builders.
+type Location func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

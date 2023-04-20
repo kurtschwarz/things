@@ -15,6 +15,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// ID is the resolver for the id field.
+func (r *locationResolver) ID(ctx context.Context, obj *ent.Location) (string, error) {
+	panic(fmt.Errorf("not implemented: ID - id"))
+}
+
+// ParentID is the resolver for the parentID field.
+func (r *locationResolver) ParentID(ctx context.Context, obj *ent.Location) (*string, error) {
+	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (ent.Noder, error) {
 	return r.client.Noder(ctx, uuid.MustParse(id))
@@ -23,6 +33,11 @@ func (r *queryResolver) Node(ctx context.Context, id string) (ent.Noder, error) 
 // Nodes is the resolver for the nodes field.
 func (r *queryResolver) Nodes(ctx context.Context, ids []string) ([]ent.Noder, error) {
 	return r.client.Noders(ctx, util.StringsToUUIDs(ids))
+}
+
+// Locations is the resolver for the locations field.
+func (r *queryResolver) Locations(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.LocationWhereInput) (*ent.LocationConnection, error) {
+	panic(fmt.Errorf("not implemented: Locations - locations"))
 }
 
 // Users is the resolver for the users field.
@@ -41,6 +56,16 @@ func (r *userResolver) ParentID(ctx context.Context, obj *ent.User) (*string, er
 }
 
 // ParentID is the resolver for the parentID field.
+func (r *createLocationInputResolver) ParentID(ctx context.Context, obj *ent.CreateLocationInput, data *string) error {
+	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+}
+
+// ChildIDs is the resolver for the childIDs field.
+func (r *createLocationInputResolver) ChildIDs(ctx context.Context, obj *ent.CreateLocationInput, data []string) error {
+	panic(fmt.Errorf("not implemented: ChildIDs - childIDs"))
+}
+
+// ParentID is the resolver for the parentID field.
 func (r *createUserInputResolver) ParentID(ctx context.Context, obj *ent.CreateUserInput, data *string) error {
 	panic(fmt.Errorf("not implemented: ParentID - parentID"))
 }
@@ -48,6 +73,81 @@ func (r *createUserInputResolver) ParentID(ctx context.Context, obj *ent.CreateU
 // ChildIDs is the resolver for the childIDs field.
 func (r *createUserInputResolver) ChildIDs(ctx context.Context, obj *ent.CreateUserInput, data []string) error {
 	panic(fmt.Errorf("not implemented: ChildIDs - childIDs"))
+}
+
+// ID is the resolver for the id field.
+func (r *locationWhereInputResolver) ID(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: ID - id"))
+}
+
+// IDNeq is the resolver for the idNEQ field.
+func (r *locationWhereInputResolver) IDNeq(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDNeq - idNEQ"))
+}
+
+// IDIn is the resolver for the idIn field.
+func (r *locationWhereInputResolver) IDIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error {
+	panic(fmt.Errorf("not implemented: IDIn - idIn"))
+}
+
+// IDNotIn is the resolver for the idNotIn field.
+func (r *locationWhereInputResolver) IDNotIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error {
+	panic(fmt.Errorf("not implemented: IDNotIn - idNotIn"))
+}
+
+// IDGt is the resolver for the idGT field.
+func (r *locationWhereInputResolver) IDGt(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDGt - idGT"))
+}
+
+// IDGte is the resolver for the idGTE field.
+func (r *locationWhereInputResolver) IDGte(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDGte - idGTE"))
+}
+
+// IDLt is the resolver for the idLT field.
+func (r *locationWhereInputResolver) IDLt(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDLt - idLT"))
+}
+
+// IDLte is the resolver for the idLTE field.
+func (r *locationWhereInputResolver) IDLte(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDLte - idLTE"))
+}
+
+// ParentID is the resolver for the parentID field.
+func (r *locationWhereInputResolver) ParentID(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+}
+
+// ParentIDNeq is the resolver for the parentIDNEQ field.
+func (r *locationWhereInputResolver) ParentIDNeq(ctx context.Context, obj *ent.LocationWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: ParentIDNeq - parentIDNEQ"))
+}
+
+// ParentIDIn is the resolver for the parentIDIn field.
+func (r *locationWhereInputResolver) ParentIDIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error {
+	panic(fmt.Errorf("not implemented: ParentIDIn - parentIDIn"))
+}
+
+// ParentIDNotIn is the resolver for the parentIDNotIn field.
+func (r *locationWhereInputResolver) ParentIDNotIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error {
+	panic(fmt.Errorf("not implemented: ParentIDNotIn - parentIDNotIn"))
+}
+
+// ParentID is the resolver for the parentID field.
+func (r *updateLocationInputResolver) ParentID(ctx context.Context, obj *ent.UpdateLocationInput, data *string) error {
+	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+}
+
+// AddChildIDs is the resolver for the addChildIDs field.
+func (r *updateLocationInputResolver) AddChildIDs(ctx context.Context, obj *ent.UpdateLocationInput, data []string) error {
+	panic(fmt.Errorf("not implemented: AddChildIDs - addChildIDs"))
+}
+
+// RemoveChildIDs is the resolver for the removeChildIDs field.
+func (r *updateLocationInputResolver) RemoveChildIDs(ctx context.Context, obj *ent.UpdateLocationInput, data []string) error {
+	panic(fmt.Errorf("not implemented: RemoveChildIDs - removeChildIDs"))
 }
 
 // ParentID is the resolver for the parentID field.
@@ -125,15 +225,33 @@ func (r *userWhereInputResolver) ParentIDNotIn(ctx context.Context, obj *ent.Use
 	panic(fmt.Errorf("not implemented: ParentIDNotIn - parentIDNotIn"))
 }
 
+// Location returns generated.LocationResolver implementation.
+func (r *Resolver) Location() generated.LocationResolver { return &locationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
+// CreateLocationInput returns generated.CreateLocationInputResolver implementation.
+func (r *Resolver) CreateLocationInput() generated.CreateLocationInputResolver {
+	return &createLocationInputResolver{r}
+}
+
 // CreateUserInput returns generated.CreateUserInputResolver implementation.
 func (r *Resolver) CreateUserInput() generated.CreateUserInputResolver {
 	return &createUserInputResolver{r}
+}
+
+// LocationWhereInput returns generated.LocationWhereInputResolver implementation.
+func (r *Resolver) LocationWhereInput() generated.LocationWhereInputResolver {
+	return &locationWhereInputResolver{r}
+}
+
+// UpdateLocationInput returns generated.UpdateLocationInputResolver implementation.
+func (r *Resolver) UpdateLocationInput() generated.UpdateLocationInputResolver {
+	return &updateLocationInputResolver{r}
 }
 
 // UpdateUserInput returns generated.UpdateUserInputResolver implementation.
@@ -146,8 +264,12 @@ func (r *Resolver) UserWhereInput() generated.UserWhereInputResolver {
 	return &userWhereInputResolver{r}
 }
 
+type locationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+type createLocationInputResolver struct{ *Resolver }
 type createUserInputResolver struct{ *Resolver }
+type locationWhereInputResolver struct{ *Resolver }
+type updateLocationInputResolver struct{ *Resolver }
 type updateUserInputResolver struct{ *Resolver }
 type userWhereInputResolver struct{ *Resolver }

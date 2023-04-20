@@ -5,11 +5,268 @@ package ent
 import (
 	"errors"
 	"fmt"
+	"things-api/ent/location"
 	"things-api/ent/predicate"
 	"things-api/ent/user"
 
 	"github.com/google/uuid"
 )
+
+// LocationWhereInput represents a where input for filtering Location queries.
+type LocationWhereInput struct {
+	Predicates []predicate.Location  `json:"-"`
+	Not        *LocationWhereInput   `json:"not,omitempty"`
+	Or         []*LocationWhereInput `json:"or,omitempty"`
+	And        []*LocationWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "parent_id" field predicates.
+	ParentID       *uuid.UUID  `json:"parentID,omitempty"`
+	ParentIDNEQ    *uuid.UUID  `json:"parentIDNEQ,omitempty"`
+	ParentIDIn     []uuid.UUID `json:"parentIDIn,omitempty"`
+	ParentIDNotIn  []uuid.UUID `json:"parentIDNotIn,omitempty"`
+	ParentIDIsNil  bool        `json:"parentIDIsNil,omitempty"`
+	ParentIDNotNil bool        `json:"parentIDNotNil,omitempty"`
+
+	// "name" field predicates.
+	Name             *string  `json:"name,omitempty"`
+	NameNEQ          *string  `json:"nameNEQ,omitempty"`
+	NameIn           []string `json:"nameIn,omitempty"`
+	NameNotIn        []string `json:"nameNotIn,omitempty"`
+	NameGT           *string  `json:"nameGT,omitempty"`
+	NameGTE          *string  `json:"nameGTE,omitempty"`
+	NameLT           *string  `json:"nameLT,omitempty"`
+	NameLTE          *string  `json:"nameLTE,omitempty"`
+	NameContains     *string  `json:"nameContains,omitempty"`
+	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
+	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
+	NameIsNil        bool     `json:"nameIsNil,omitempty"`
+	NameNotNil       bool     `json:"nameNotNil,omitempty"`
+	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
+	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+
+	// "parent" edge predicates.
+	HasParent     *bool                 `json:"hasParent,omitempty"`
+	HasParentWith []*LocationWhereInput `json:"hasParentWith,omitempty"`
+
+	// "children" edge predicates.
+	HasChildren     *bool                 `json:"hasChildren,omitempty"`
+	HasChildrenWith []*LocationWhereInput `json:"hasChildrenWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *LocationWhereInput) AddPredicates(predicates ...predicate.Location) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the LocationWhereInput filter on the LocationQuery builder.
+func (i *LocationWhereInput) Filter(q *LocationQuery) (*LocationQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyLocationWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyLocationWhereInput is returned in case the LocationWhereInput is empty.
+var ErrEmptyLocationWhereInput = errors.New("ent: empty predicate LocationWhereInput")
+
+// P returns a predicate for filtering locations.
+// An error is returned if the input is empty or invalid.
+func (i *LocationWhereInput) P() (predicate.Location, error) {
+	var predicates []predicate.Location
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, location.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.Location, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, location.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.Location, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, location.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, location.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, location.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, location.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, location.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, location.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, location.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, location.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, location.IDLTE(*i.IDLTE))
+	}
+	if i.ParentID != nil {
+		predicates = append(predicates, location.ParentIDEQ(*i.ParentID))
+	}
+	if i.ParentIDNEQ != nil {
+		predicates = append(predicates, location.ParentIDNEQ(*i.ParentIDNEQ))
+	}
+	if len(i.ParentIDIn) > 0 {
+		predicates = append(predicates, location.ParentIDIn(i.ParentIDIn...))
+	}
+	if len(i.ParentIDNotIn) > 0 {
+		predicates = append(predicates, location.ParentIDNotIn(i.ParentIDNotIn...))
+	}
+	if i.ParentIDIsNil {
+		predicates = append(predicates, location.ParentIDIsNil())
+	}
+	if i.ParentIDNotNil {
+		predicates = append(predicates, location.ParentIDNotNil())
+	}
+	if i.Name != nil {
+		predicates = append(predicates, location.NameEQ(*i.Name))
+	}
+	if i.NameNEQ != nil {
+		predicates = append(predicates, location.NameNEQ(*i.NameNEQ))
+	}
+	if len(i.NameIn) > 0 {
+		predicates = append(predicates, location.NameIn(i.NameIn...))
+	}
+	if len(i.NameNotIn) > 0 {
+		predicates = append(predicates, location.NameNotIn(i.NameNotIn...))
+	}
+	if i.NameGT != nil {
+		predicates = append(predicates, location.NameGT(*i.NameGT))
+	}
+	if i.NameGTE != nil {
+		predicates = append(predicates, location.NameGTE(*i.NameGTE))
+	}
+	if i.NameLT != nil {
+		predicates = append(predicates, location.NameLT(*i.NameLT))
+	}
+	if i.NameLTE != nil {
+		predicates = append(predicates, location.NameLTE(*i.NameLTE))
+	}
+	if i.NameContains != nil {
+		predicates = append(predicates, location.NameContains(*i.NameContains))
+	}
+	if i.NameHasPrefix != nil {
+		predicates = append(predicates, location.NameHasPrefix(*i.NameHasPrefix))
+	}
+	if i.NameHasSuffix != nil {
+		predicates = append(predicates, location.NameHasSuffix(*i.NameHasSuffix))
+	}
+	if i.NameIsNil {
+		predicates = append(predicates, location.NameIsNil())
+	}
+	if i.NameNotNil {
+		predicates = append(predicates, location.NameNotNil())
+	}
+	if i.NameEqualFold != nil {
+		predicates = append(predicates, location.NameEqualFold(*i.NameEqualFold))
+	}
+	if i.NameContainsFold != nil {
+		predicates = append(predicates, location.NameContainsFold(*i.NameContainsFold))
+	}
+
+	if i.HasParent != nil {
+		p := location.HasParent()
+		if !*i.HasParent {
+			p = location.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasParentWith) > 0 {
+		with := make([]predicate.Location, 0, len(i.HasParentWith))
+		for _, w := range i.HasParentWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasParentWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, location.HasParentWith(with...))
+	}
+	if i.HasChildren != nil {
+		p := location.HasChildren()
+		if !*i.HasChildren {
+			p = location.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasChildrenWith) > 0 {
+		with := make([]predicate.Location, 0, len(i.HasChildrenWith))
+		for _, w := range i.HasChildrenWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasChildrenWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, location.HasChildrenWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyLocationWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return location.And(predicates...), nil
+	}
+}
 
 // UserWhereInput represents a where input for filtering User queries.
 type UserWhereInput struct {

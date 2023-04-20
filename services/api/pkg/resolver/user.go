@@ -7,15 +7,9 @@ package resolver
 import (
 	"context"
 	"things-api/ent"
-	"things-api/graph/generated"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput) (*ent.User, error) {
 	return r.client.User.Create().SetInput(input).Save(ctx)
 }
-
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-type mutationResolver struct{ *Resolver }
