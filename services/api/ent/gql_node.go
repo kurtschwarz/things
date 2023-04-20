@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"things-api/ent/location"
+	"things-api/ent/tag"
 	"things-api/ent/user"
 
 	"entgo.io/contrib/entgql"
@@ -21,6 +22,9 @@ type Noder interface {
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *Location) IsNode() {}
+
+// IsNode implements the Node interface check for GQLGen.
+func (n *Tag) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *User) IsNode() {}
@@ -87,6 +91,18 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 		query := c.Location.Query().
 			Where(location.ID(id))
 		query, err := query.CollectFields(ctx, "Location")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case tag.Table:
+		query := c.Tag.Query().
+			Where(tag.ID(id))
+		query, err := query.CollectFields(ctx, "Tag")
 		if err != nil {
 			return nil, err
 		}
@@ -184,6 +200,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		query := c.Location.Query().
 			Where(location.IDIn(ids...))
 		query, err := query.CollectFields(ctx, "Location")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case tag.Table:
+		query := c.Tag.Query().
+			Where(tag.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Tag")
 		if err != nil {
 			return nil, err
 		}

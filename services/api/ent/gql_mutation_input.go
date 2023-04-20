@@ -80,6 +80,52 @@ func (c *LocationUpdateOne) SetInput(i UpdateLocationInput) *LocationUpdateOne {
 	return c
 }
 
+// CreateTagInput represents a mutation input for creating tags.
+type CreateTagInput struct {
+	Name *string
+}
+
+// Mutate applies the CreateTagInput on the TagMutation builder.
+func (i *CreateTagInput) Mutate(m *TagMutation) {
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+}
+
+// SetInput applies the change-set in the CreateTagInput on the TagCreate builder.
+func (c *TagCreate) SetInput(i CreateTagInput) *TagCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateTagInput represents a mutation input for updating tags.
+type UpdateTagInput struct {
+	ClearName bool
+	Name      *string
+}
+
+// Mutate applies the UpdateTagInput on the TagMutation builder.
+func (i *UpdateTagInput) Mutate(m *TagMutation) {
+	if i.ClearName {
+		m.ClearName()
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+}
+
+// SetInput applies the change-set in the UpdateTagInput on the TagUpdate builder.
+func (c *TagUpdate) SetInput(i UpdateTagInput) *TagUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateTagInput on the TagUpdateOne builder.
+func (c *TagUpdateOne) SetInput(i UpdateTagInput) *TagUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
 	Name     *string

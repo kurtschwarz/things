@@ -40,14 +40,24 @@ func (r *queryResolver) Locations(ctx context.Context, after *entgql.Cursor[uuid
 	return r.client.Location.Query().Paginate(ctx, after, first, before, last, ent.WithLocationFilter(where.Filter))
 }
 
+// Tags is the resolver for the tags field.
+func (r *queryResolver) Tags(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TagWhereInput) (*ent.TagConnection, error) {
+	return r.client.Tag.Query().Paginate(ctx, after, first, before, last, ent.WithTagFilter(where.Filter))
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.UserWhereInput) (*ent.UserConnection, error) {
 	return r.client.User.Query().Paginate(ctx, after, first, before, last, ent.WithUserFilter(where.Filter))
 }
 
 // ID is the resolver for the id field.
+func (r *tagResolver) ID(ctx context.Context, obj *ent.Tag) (string, error) {
+	return obj.ID.String(), nil
+}
+
+// ID is the resolver for the id field.
 func (r *userResolver) ID(ctx context.Context, obj *ent.User) (string, error) {
-	return obj.String(), nil
+	return obj.ID.String(), nil
 }
 
 // ParentID is the resolver for the parentID field.
@@ -133,6 +143,46 @@ func (r *locationWhereInputResolver) ParentIDIn(ctx context.Context, obj *ent.Lo
 // ParentIDNotIn is the resolver for the parentIDNotIn field.
 func (r *locationWhereInputResolver) ParentIDNotIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error {
 	panic(fmt.Errorf("not implemented: ParentIDNotIn - parentIDNotIn"))
+}
+
+// ID is the resolver for the id field.
+func (r *tagWhereInputResolver) ID(ctx context.Context, obj *ent.TagWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: ID - id"))
+}
+
+// IDNeq is the resolver for the idNEQ field.
+func (r *tagWhereInputResolver) IDNeq(ctx context.Context, obj *ent.TagWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDNeq - idNEQ"))
+}
+
+// IDIn is the resolver for the idIn field.
+func (r *tagWhereInputResolver) IDIn(ctx context.Context, obj *ent.TagWhereInput, data []string) error {
+	panic(fmt.Errorf("not implemented: IDIn - idIn"))
+}
+
+// IDNotIn is the resolver for the idNotIn field.
+func (r *tagWhereInputResolver) IDNotIn(ctx context.Context, obj *ent.TagWhereInput, data []string) error {
+	panic(fmt.Errorf("not implemented: IDNotIn - idNotIn"))
+}
+
+// IDGt is the resolver for the idGT field.
+func (r *tagWhereInputResolver) IDGt(ctx context.Context, obj *ent.TagWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDGt - idGT"))
+}
+
+// IDGte is the resolver for the idGTE field.
+func (r *tagWhereInputResolver) IDGte(ctx context.Context, obj *ent.TagWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDGte - idGTE"))
+}
+
+// IDLt is the resolver for the idLT field.
+func (r *tagWhereInputResolver) IDLt(ctx context.Context, obj *ent.TagWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDLt - idLT"))
+}
+
+// IDLte is the resolver for the idLTE field.
+func (r *tagWhereInputResolver) IDLte(ctx context.Context, obj *ent.TagWhereInput, data *string) error {
+	panic(fmt.Errorf("not implemented: IDLte - idLTE"))
 }
 
 // ParentID is the resolver for the parentID field.
@@ -231,6 +281,9 @@ func (r *Resolver) Location() generated.LocationResolver { return &locationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Tag returns generated.TagResolver implementation.
+func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
+
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
@@ -249,6 +302,9 @@ func (r *Resolver) LocationWhereInput() generated.LocationWhereInputResolver {
 	return &locationWhereInputResolver{r}
 }
 
+// TagWhereInput returns generated.TagWhereInputResolver implementation.
+func (r *Resolver) TagWhereInput() generated.TagWhereInputResolver { return &tagWhereInputResolver{r} }
+
 // UpdateLocationInput returns generated.UpdateLocationInputResolver implementation.
 func (r *Resolver) UpdateLocationInput() generated.UpdateLocationInputResolver {
 	return &updateLocationInputResolver{r}
@@ -266,10 +322,12 @@ func (r *Resolver) UserWhereInput() generated.UserWhereInputResolver {
 
 type locationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type tagResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type createLocationInputResolver struct{ *Resolver }
 type createUserInputResolver struct{ *Resolver }
 type locationWhereInputResolver struct{ *Resolver }
+type tagWhereInputResolver struct{ *Resolver }
 type updateLocationInputResolver struct{ *Resolver }
 type updateUserInputResolver struct{ *Resolver }
 type userWhereInputResolver struct{ *Resolver }

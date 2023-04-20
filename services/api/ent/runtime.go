@@ -5,6 +5,7 @@ package ent
 import (
 	"things-api/ent/location"
 	"things-api/ent/schema"
+	"things-api/ent/tag"
 	"things-api/ent/user"
 
 	"github.com/google/uuid"
@@ -20,6 +21,12 @@ func init() {
 	locationDescID := locationFields[0].Descriptor()
 	// location.DefaultID holds the default value on creation for the id field.
 	location.DefaultID = locationDescID.Default.(func() uuid.UUID)
+	tagFields := schema.Tag{}.Fields()
+	_ = tagFields
+	// tagDescID is the schema descriptor for id field.
+	tagDescID := tagFields[0].Descriptor()
+	// tag.DefaultID holds the default value on creation for the id field.
+	tag.DefaultID = tagDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescID is the schema descriptor for id field.

@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"sync"
 	"things-api/ent/location"
+	"things-api/ent/tag"
 	"things-api/ent/user"
 
 	"entgo.io/ent"
@@ -75,6 +76,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			location.Table: location.ValidColumn,
+			tag.Table:      tag.ValidColumn,
 			user.Table:     user.ValidColumn,
 		})
 	})
