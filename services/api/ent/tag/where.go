@@ -6,6 +6,7 @@ import (
 	"things-api/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -132,6 +133,52 @@ func NameEqualFold(v string) predicate.Tag {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Tag {
 	return predicate.Tag(sql.FieldContainsFold(FieldName, v))
+}
+
+// HasAsset applies the HasEdge predicate on the "asset" edge.
+func HasAsset() predicate.Tag {
+	return predicate.Tag(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, AssetTable, AssetPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAssetWith applies the HasEdge predicate on the "asset" edge with a given conditions (other predicates).
+func HasAssetWith(preds ...predicate.Asset) predicate.Tag {
+	return predicate.Tag(func(s *sql.Selector) {
+		step := newAssetStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAssetTag applies the HasEdge predicate on the "asset_tag" edge.
+func HasAssetTag() predicate.Tag {
+	return predicate.Tag(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, AssetTagTable, AssetTagColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAssetTagWith applies the HasEdge predicate on the "asset_tag" edge with a given conditions (other predicates).
+func HasAssetTagWith(preds ...predicate.AssetTag) predicate.Tag {
+	return predicate.Tag(func(s *sql.Selector) {
+		step := newAssetTagStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

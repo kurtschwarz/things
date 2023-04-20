@@ -4,6 +4,7 @@ package tag
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -14,8 +15,24 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// EdgeAsset holds the string denoting the asset edge name in mutations.
+	EdgeAsset = "asset"
+	// EdgeAssetTag holds the string denoting the asset_tag edge name in mutations.
+	EdgeAssetTag = "asset_tag"
 	// Table holds the table name of the tag in the database.
 	Table = "tags"
+	// AssetTable is the table that holds the asset relation/edge. The primary key declared below.
+	AssetTable = "asset_tags"
+	// AssetInverseTable is the table name for the Asset entity.
+	// It exists in this package in order to avoid circular dependency with the "asset" package.
+	AssetInverseTable = "assets"
+	// AssetTagTable is the table that holds the asset_tag relation/edge.
+	AssetTagTable = "asset_tags"
+	// AssetTagInverseTable is the table name for the AssetTag entity.
+	// It exists in this package in order to avoid circular dependency with the "assettag" package.
+	AssetTagInverseTable = "asset_tags"
+	// AssetTagColumn is the table column denoting the asset_tag relation/edge.
+	AssetTagColumn = "tag_id"
 )
 
 // Columns holds all SQL columns for tag fields.
@@ -23,6 +40,12 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 }
+
+var (
+	// AssetPrimaryKey and AssetColumn2 are the table columns denoting the
+	// primary key for the asset relation (M2M).
+	AssetPrimaryKey = []string{"asset_id", "tag_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -50,4 +73,46 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByAssetCount orders the results by asset count.
+func ByAssetCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAssetStep(), opts...)
+	}
+}
+
+// ByAsset orders the results by asset terms.
+func ByAsset(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAssetStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAssetTagCount orders the results by asset_tag count.
+func ByAssetTagCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAssetTagStep(), opts...)
+	}
+}
+
+// ByAssetTag orders the results by asset_tag terms.
+func ByAssetTag(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAssetTagStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newAssetStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AssetInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, AssetTable, AssetPrimaryKey...),
+	)
+}
+func newAssetTagStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AssetTagInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, AssetTagTable, AssetTagColumn),
+	)
 }

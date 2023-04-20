@@ -8,6 +8,74 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+func (a *Asset) Parent(ctx context.Context) (*Asset, error) {
+	result, err := a.Edges.ParentOrErr()
+	if IsNotLoaded(err) {
+		result, err = a.QueryParent().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (a *Asset) Children(ctx context.Context) (result []*Asset, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = a.NamedChildren(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = a.Edges.ChildrenOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = a.QueryChildren().All(ctx)
+	}
+	return result, err
+}
+
+func (a *Asset) Location(ctx context.Context) (*Location, error) {
+	result, err := a.Edges.LocationOrErr()
+	if IsNotLoaded(err) {
+		result, err = a.QueryLocation().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (a *Asset) Tags(ctx context.Context) (result []*Tag, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = a.NamedTags(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = a.Edges.TagsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = a.QueryTags().All(ctx)
+	}
+	return result, err
+}
+
+func (a *Asset) AssetTags(ctx context.Context) (result []*AssetTag, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = a.NamedAssetTags(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = a.Edges.AssetTagsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = a.QueryAssetTags().All(ctx)
+	}
+	return result, err
+}
+
+func (at *AssetTag) Asset(ctx context.Context) (*Asset, error) {
+	result, err := at.Edges.AssetOrErr()
+	if IsNotLoaded(err) {
+		result, err = at.QueryAsset().Only(ctx)
+	}
+	return result, err
+}
+
+func (at *AssetTag) Tag(ctx context.Context) (*Tag, error) {
+	result, err := at.Edges.TagOrErr()
+	if IsNotLoaded(err) {
+		result, err = at.QueryTag().Only(ctx)
+	}
+	return result, err
+}
+
 func (l *Location) Parent(ctx context.Context) (*Location, error) {
 	result, err := l.Edges.ParentOrErr()
 	if IsNotLoaded(err) {
@@ -24,6 +92,30 @@ func (l *Location) Children(ctx context.Context) (result []*Location, err error)
 	}
 	if IsNotLoaded(err) {
 		result, err = l.QueryChildren().All(ctx)
+	}
+	return result, err
+}
+
+func (t *Tag) Asset(ctx context.Context) (result []*Asset, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = t.NamedAsset(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = t.Edges.AssetOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = t.QueryAsset().All(ctx)
+	}
+	return result, err
+}
+
+func (t *Tag) AssetTag(ctx context.Context) (result []*AssetTag, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = t.NamedAssetTag(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = t.Edges.AssetTagOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = t.QueryAssetTag().All(ctx)
 	}
 	return result, err
 }

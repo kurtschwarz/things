@@ -8,6 +8,71 @@ import (
 )
 
 var (
+	// AssetsColumns holds the columns for the "assets" table.
+	AssetsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "location_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// AssetsTable holds the schema information for the "assets" table.
+	AssetsTable = &schema.Table{
+		Name:       "assets",
+		Columns:    AssetsColumns,
+		PrimaryKey: []*schema.Column{AssetsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "assets_assets_children",
+				Columns:    []*schema.Column{AssetsColumns[2]},
+				RefColumns: []*schema.Column{AssetsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "assets_locations_location",
+				Columns:    []*schema.Column{AssetsColumns[3]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// AssetTagsColumns holds the columns for the "asset_tags" table.
+	AssetTagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "asset_id", Type: field.TypeUUID},
+		{Name: "tag_id", Type: field.TypeUUID},
+	}
+	// AssetTagsTable holds the schema information for the "asset_tags" table.
+	AssetTagsTable = &schema.Table{
+		Name:       "asset_tags",
+		Columns:    AssetTagsColumns,
+		PrimaryKey: []*schema.Column{AssetTagsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "asset_tags_assets_asset",
+				Columns:    []*schema.Column{AssetTagsColumns[1]},
+				RefColumns: []*schema.Column{AssetsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "asset_tags_tags_tag",
+				Columns:    []*schema.Column{AssetTagsColumns[2]},
+				RefColumns: []*schema.Column{TagsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "assettag_tag_id",
+				Unique:  true,
+				Columns: []*schema.Column{AssetTagsColumns[2]},
+			},
+			{
+				Name:    "assettag_asset_id_tag_id",
+				Unique:  true,
+				Columns: []*schema.Column{AssetTagsColumns[1], AssetTagsColumns[2]},
+			},
+		},
+	}
 	// LocationsColumns holds the columns for the "locations" table.
 	LocationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -61,6 +126,8 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AssetsTable,
+		AssetTagsTable,
 		LocationsTable,
 		TagsTable,
 		UsersTable,
@@ -68,6 +135,10 @@ var (
 )
 
 func init() {
+	AssetsTable.ForeignKeys[0].RefTable = AssetsTable
+	AssetsTable.ForeignKeys[1].RefTable = LocationsTable
+	AssetTagsTable.ForeignKeys[0].RefTable = AssetsTable
+	AssetTagsTable.ForeignKeys[1].RefTable = TagsTable
 	LocationsTable.ForeignKeys[0].RefTable = LocationsTable
 	UsersTable.ForeignKeys[0].RefTable = UsersTable
 }

@@ -12,3 +12,6 @@ build *SERVICES:
 
 run *SERVICES:
   {{compose}} up {{SERVICES}}
+
+codegen:
+  cd services/api && go generate .

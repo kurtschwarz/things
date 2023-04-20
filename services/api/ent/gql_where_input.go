@@ -5,6 +5,8 @@ package ent
 import (
 	"errors"
 	"fmt"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/predicate"
 	"things-api/ent/tag"
@@ -12,6 +14,558 @@ import (
 
 	"github.com/google/uuid"
 )
+
+// AssetWhereInput represents a where input for filtering Asset queries.
+type AssetWhereInput struct {
+	Predicates []predicate.Asset  `json:"-"`
+	Not        *AssetWhereInput   `json:"not,omitempty"`
+	Or         []*AssetWhereInput `json:"or,omitempty"`
+	And        []*AssetWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "parent_id" field predicates.
+	ParentID       *uuid.UUID  `json:"parentID,omitempty"`
+	ParentIDNEQ    *uuid.UUID  `json:"parentIDNEQ,omitempty"`
+	ParentIDIn     []uuid.UUID `json:"parentIDIn,omitempty"`
+	ParentIDNotIn  []uuid.UUID `json:"parentIDNotIn,omitempty"`
+	ParentIDIsNil  bool        `json:"parentIDIsNil,omitempty"`
+	ParentIDNotNil bool        `json:"parentIDNotNil,omitempty"`
+
+	// "location_id" field predicates.
+	LocationID       *uuid.UUID  `json:"locationID,omitempty"`
+	LocationIDNEQ    *uuid.UUID  `json:"locationIDNEQ,omitempty"`
+	LocationIDIn     []uuid.UUID `json:"locationIDIn,omitempty"`
+	LocationIDNotIn  []uuid.UUID `json:"locationIDNotIn,omitempty"`
+	LocationIDIsNil  bool        `json:"locationIDIsNil,omitempty"`
+	LocationIDNotNil bool        `json:"locationIDNotNil,omitempty"`
+
+	// "name" field predicates.
+	Name             *string  `json:"name,omitempty"`
+	NameNEQ          *string  `json:"nameNEQ,omitempty"`
+	NameIn           []string `json:"nameIn,omitempty"`
+	NameNotIn        []string `json:"nameNotIn,omitempty"`
+	NameGT           *string  `json:"nameGT,omitempty"`
+	NameGTE          *string  `json:"nameGTE,omitempty"`
+	NameLT           *string  `json:"nameLT,omitempty"`
+	NameLTE          *string  `json:"nameLTE,omitempty"`
+	NameContains     *string  `json:"nameContains,omitempty"`
+	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
+	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
+	NameIsNil        bool     `json:"nameIsNil,omitempty"`
+	NameNotNil       bool     `json:"nameNotNil,omitempty"`
+	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
+	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+
+	// "parent" edge predicates.
+	HasParent     *bool              `json:"hasParent,omitempty"`
+	HasParentWith []*AssetWhereInput `json:"hasParentWith,omitempty"`
+
+	// "children" edge predicates.
+	HasChildren     *bool              `json:"hasChildren,omitempty"`
+	HasChildrenWith []*AssetWhereInput `json:"hasChildrenWith,omitempty"`
+
+	// "location" edge predicates.
+	HasLocation     *bool                 `json:"hasLocation,omitempty"`
+	HasLocationWith []*LocationWhereInput `json:"hasLocationWith,omitempty"`
+
+	// "tags" edge predicates.
+	HasTags     *bool            `json:"hasTags,omitempty"`
+	HasTagsWith []*TagWhereInput `json:"hasTagsWith,omitempty"`
+
+	// "asset_tags" edge predicates.
+	HasAssetTags     *bool                 `json:"hasAssetTags,omitempty"`
+	HasAssetTagsWith []*AssetTagWhereInput `json:"hasAssetTagsWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *AssetWhereInput) AddPredicates(predicates ...predicate.Asset) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the AssetWhereInput filter on the AssetQuery builder.
+func (i *AssetWhereInput) Filter(q *AssetQuery) (*AssetQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyAssetWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyAssetWhereInput is returned in case the AssetWhereInput is empty.
+var ErrEmptyAssetWhereInput = errors.New("ent: empty predicate AssetWhereInput")
+
+// P returns a predicate for filtering assets.
+// An error is returned if the input is empty or invalid.
+func (i *AssetWhereInput) P() (predicate.Asset, error) {
+	var predicates []predicate.Asset
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, asset.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.Asset, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, asset.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.Asset, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, asset.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, asset.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, asset.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, asset.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, asset.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, asset.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, asset.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, asset.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, asset.IDLTE(*i.IDLTE))
+	}
+	if i.ParentID != nil {
+		predicates = append(predicates, asset.ParentIDEQ(*i.ParentID))
+	}
+	if i.ParentIDNEQ != nil {
+		predicates = append(predicates, asset.ParentIDNEQ(*i.ParentIDNEQ))
+	}
+	if len(i.ParentIDIn) > 0 {
+		predicates = append(predicates, asset.ParentIDIn(i.ParentIDIn...))
+	}
+	if len(i.ParentIDNotIn) > 0 {
+		predicates = append(predicates, asset.ParentIDNotIn(i.ParentIDNotIn...))
+	}
+	if i.ParentIDIsNil {
+		predicates = append(predicates, asset.ParentIDIsNil())
+	}
+	if i.ParentIDNotNil {
+		predicates = append(predicates, asset.ParentIDNotNil())
+	}
+	if i.LocationID != nil {
+		predicates = append(predicates, asset.LocationIDEQ(*i.LocationID))
+	}
+	if i.LocationIDNEQ != nil {
+		predicates = append(predicates, asset.LocationIDNEQ(*i.LocationIDNEQ))
+	}
+	if len(i.LocationIDIn) > 0 {
+		predicates = append(predicates, asset.LocationIDIn(i.LocationIDIn...))
+	}
+	if len(i.LocationIDNotIn) > 0 {
+		predicates = append(predicates, asset.LocationIDNotIn(i.LocationIDNotIn...))
+	}
+	if i.LocationIDIsNil {
+		predicates = append(predicates, asset.LocationIDIsNil())
+	}
+	if i.LocationIDNotNil {
+		predicates = append(predicates, asset.LocationIDNotNil())
+	}
+	if i.Name != nil {
+		predicates = append(predicates, asset.NameEQ(*i.Name))
+	}
+	if i.NameNEQ != nil {
+		predicates = append(predicates, asset.NameNEQ(*i.NameNEQ))
+	}
+	if len(i.NameIn) > 0 {
+		predicates = append(predicates, asset.NameIn(i.NameIn...))
+	}
+	if len(i.NameNotIn) > 0 {
+		predicates = append(predicates, asset.NameNotIn(i.NameNotIn...))
+	}
+	if i.NameGT != nil {
+		predicates = append(predicates, asset.NameGT(*i.NameGT))
+	}
+	if i.NameGTE != nil {
+		predicates = append(predicates, asset.NameGTE(*i.NameGTE))
+	}
+	if i.NameLT != nil {
+		predicates = append(predicates, asset.NameLT(*i.NameLT))
+	}
+	if i.NameLTE != nil {
+		predicates = append(predicates, asset.NameLTE(*i.NameLTE))
+	}
+	if i.NameContains != nil {
+		predicates = append(predicates, asset.NameContains(*i.NameContains))
+	}
+	if i.NameHasPrefix != nil {
+		predicates = append(predicates, asset.NameHasPrefix(*i.NameHasPrefix))
+	}
+	if i.NameHasSuffix != nil {
+		predicates = append(predicates, asset.NameHasSuffix(*i.NameHasSuffix))
+	}
+	if i.NameIsNil {
+		predicates = append(predicates, asset.NameIsNil())
+	}
+	if i.NameNotNil {
+		predicates = append(predicates, asset.NameNotNil())
+	}
+	if i.NameEqualFold != nil {
+		predicates = append(predicates, asset.NameEqualFold(*i.NameEqualFold))
+	}
+	if i.NameContainsFold != nil {
+		predicates = append(predicates, asset.NameContainsFold(*i.NameContainsFold))
+	}
+
+	if i.HasParent != nil {
+		p := asset.HasParent()
+		if !*i.HasParent {
+			p = asset.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasParentWith) > 0 {
+		with := make([]predicate.Asset, 0, len(i.HasParentWith))
+		for _, w := range i.HasParentWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasParentWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, asset.HasParentWith(with...))
+	}
+	if i.HasChildren != nil {
+		p := asset.HasChildren()
+		if !*i.HasChildren {
+			p = asset.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasChildrenWith) > 0 {
+		with := make([]predicate.Asset, 0, len(i.HasChildrenWith))
+		for _, w := range i.HasChildrenWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasChildrenWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, asset.HasChildrenWith(with...))
+	}
+	if i.HasLocation != nil {
+		p := asset.HasLocation()
+		if !*i.HasLocation {
+			p = asset.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasLocationWith) > 0 {
+		with := make([]predicate.Location, 0, len(i.HasLocationWith))
+		for _, w := range i.HasLocationWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasLocationWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, asset.HasLocationWith(with...))
+	}
+	if i.HasTags != nil {
+		p := asset.HasTags()
+		if !*i.HasTags {
+			p = asset.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasTagsWith) > 0 {
+		with := make([]predicate.Tag, 0, len(i.HasTagsWith))
+		for _, w := range i.HasTagsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasTagsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, asset.HasTagsWith(with...))
+	}
+	if i.HasAssetTags != nil {
+		p := asset.HasAssetTags()
+		if !*i.HasAssetTags {
+			p = asset.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasAssetTagsWith) > 0 {
+		with := make([]predicate.AssetTag, 0, len(i.HasAssetTagsWith))
+		for _, w := range i.HasAssetTagsWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasAssetTagsWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, asset.HasAssetTagsWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyAssetWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return asset.And(predicates...), nil
+	}
+}
+
+// AssetTagWhereInput represents a where input for filtering AssetTag queries.
+type AssetTagWhereInput struct {
+	Predicates []predicate.AssetTag  `json:"-"`
+	Not        *AssetTagWhereInput   `json:"not,omitempty"`
+	Or         []*AssetTagWhereInput `json:"or,omitempty"`
+	And        []*AssetTagWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "asset_id" field predicates.
+	AssetID      *uuid.UUID  `json:"assetID,omitempty"`
+	AssetIDNEQ   *uuid.UUID  `json:"assetIDNEQ,omitempty"`
+	AssetIDIn    []uuid.UUID `json:"assetIDIn,omitempty"`
+	AssetIDNotIn []uuid.UUID `json:"assetIDNotIn,omitempty"`
+
+	// "tag_id" field predicates.
+	TagID      *uuid.UUID  `json:"tagID,omitempty"`
+	TagIDNEQ   *uuid.UUID  `json:"tagIDNEQ,omitempty"`
+	TagIDIn    []uuid.UUID `json:"tagIDIn,omitempty"`
+	TagIDNotIn []uuid.UUID `json:"tagIDNotIn,omitempty"`
+
+	// "asset" edge predicates.
+	HasAsset     *bool              `json:"hasAsset,omitempty"`
+	HasAssetWith []*AssetWhereInput `json:"hasAssetWith,omitempty"`
+
+	// "tag" edge predicates.
+	HasTag     *bool            `json:"hasTag,omitempty"`
+	HasTagWith []*TagWhereInput `json:"hasTagWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *AssetTagWhereInput) AddPredicates(predicates ...predicate.AssetTag) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the AssetTagWhereInput filter on the AssetTagQuery builder.
+func (i *AssetTagWhereInput) Filter(q *AssetTagQuery) (*AssetTagQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyAssetTagWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyAssetTagWhereInput is returned in case the AssetTagWhereInput is empty.
+var ErrEmptyAssetTagWhereInput = errors.New("ent: empty predicate AssetTagWhereInput")
+
+// P returns a predicate for filtering assettags.
+// An error is returned if the input is empty or invalid.
+func (i *AssetTagWhereInput) P() (predicate.AssetTag, error) {
+	var predicates []predicate.AssetTag
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, assettag.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.AssetTag, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, assettag.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.AssetTag, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, assettag.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, assettag.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, assettag.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, assettag.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, assettag.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, assettag.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, assettag.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, assettag.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, assettag.IDLTE(*i.IDLTE))
+	}
+	if i.AssetID != nil {
+		predicates = append(predicates, assettag.AssetIDEQ(*i.AssetID))
+	}
+	if i.AssetIDNEQ != nil {
+		predicates = append(predicates, assettag.AssetIDNEQ(*i.AssetIDNEQ))
+	}
+	if len(i.AssetIDIn) > 0 {
+		predicates = append(predicates, assettag.AssetIDIn(i.AssetIDIn...))
+	}
+	if len(i.AssetIDNotIn) > 0 {
+		predicates = append(predicates, assettag.AssetIDNotIn(i.AssetIDNotIn...))
+	}
+	if i.TagID != nil {
+		predicates = append(predicates, assettag.TagIDEQ(*i.TagID))
+	}
+	if i.TagIDNEQ != nil {
+		predicates = append(predicates, assettag.TagIDNEQ(*i.TagIDNEQ))
+	}
+	if len(i.TagIDIn) > 0 {
+		predicates = append(predicates, assettag.TagIDIn(i.TagIDIn...))
+	}
+	if len(i.TagIDNotIn) > 0 {
+		predicates = append(predicates, assettag.TagIDNotIn(i.TagIDNotIn...))
+	}
+
+	if i.HasAsset != nil {
+		p := assettag.HasAsset()
+		if !*i.HasAsset {
+			p = assettag.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasAssetWith) > 0 {
+		with := make([]predicate.Asset, 0, len(i.HasAssetWith))
+		for _, w := range i.HasAssetWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasAssetWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, assettag.HasAssetWith(with...))
+	}
+	if i.HasTag != nil {
+		p := assettag.HasTag()
+		if !*i.HasTag {
+			p = assettag.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasTagWith) > 0 {
+		with := make([]predicate.Tag, 0, len(i.HasTagWith))
+		for _, w := range i.HasTagWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasTagWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, assettag.HasTagWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyAssetTagWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return assettag.And(predicates...), nil
+	}
+}
 
 // LocationWhereInput represents a where input for filtering Location queries.
 type LocationWhereInput struct {
@@ -302,6 +856,14 @@ type TagWhereInput struct {
 	NameNotNil       bool     `json:"nameNotNil,omitempty"`
 	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
 	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+
+	// "asset" edge predicates.
+	HasAsset     *bool              `json:"hasAsset,omitempty"`
+	HasAssetWith []*AssetWhereInput `json:"hasAssetWith,omitempty"`
+
+	// "asset_tag" edge predicates.
+	HasAssetTag     *bool                 `json:"hasAssetTag,omitempty"`
+	HasAssetTagWith []*AssetTagWhereInput `json:"hasAssetTagWith,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -445,6 +1007,42 @@ func (i *TagWhereInput) P() (predicate.Tag, error) {
 		predicates = append(predicates, tag.NameContainsFold(*i.NameContainsFold))
 	}
 
+	if i.HasAsset != nil {
+		p := tag.HasAsset()
+		if !*i.HasAsset {
+			p = tag.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasAssetWith) > 0 {
+		with := make([]predicate.Asset, 0, len(i.HasAssetWith))
+		for _, w := range i.HasAssetWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasAssetWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, tag.HasAssetWith(with...))
+	}
+	if i.HasAssetTag != nil {
+		p := tag.HasAssetTag()
+		if !*i.HasAssetTag {
+			p = tag.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasAssetTagWith) > 0 {
+		with := make([]predicate.AssetTag, 0, len(i.HasAssetTagWith))
+		for _, w := range i.HasAssetTagWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasAssetTagWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, tag.HasAssetTagWith(with...))
+	}
 	switch len(predicates) {
 	case 0:
 		return nil, ErrEmptyTagWhereInput

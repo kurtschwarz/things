@@ -10,6 +10,8 @@ import (
 
 	"things-api/ent/migrate"
 
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/tag"
 	"things-api/ent/user"
@@ -26,6 +28,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Asset is the client for interacting with the Asset builders.
+	Asset *AssetClient
+	// AssetTag is the client for interacting with the AssetTag builders.
+	AssetTag *AssetTagClient
 	// Location is the client for interacting with the Location builders.
 	Location *LocationClient
 	// Tag is the client for interacting with the Tag builders.
@@ -45,6 +51,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Asset = NewAssetClient(c.config)
+	c.AssetTag = NewAssetTagClient(c.config)
 	c.Location = NewLocationClient(c.config)
 	c.Tag = NewTagClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -130,6 +138,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:      ctx,
 		config:   cfg,
+		Asset:    NewAssetClient(cfg),
+		AssetTag: NewAssetTagClient(cfg),
 		Location: NewLocationClient(cfg),
 		Tag:      NewTagClient(cfg),
 		User:     NewUserClient(cfg),
@@ -152,6 +162,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:      ctx,
 		config:   cfg,
+		Asset:    NewAssetClient(cfg),
+		AssetTag: NewAssetTagClient(cfg),
 		Location: NewLocationClient(cfg),
 		Tag:      NewTagClient(cfg),
 		User:     NewUserClient(cfg),
@@ -161,7 +173,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Location.
+//		Asset.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -183,6 +195,8 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Asset.Use(hooks...)
+	c.AssetTag.Use(hooks...)
 	c.Location.Use(hooks...)
 	c.Tag.Use(hooks...)
 	c.User.Use(hooks...)
@@ -191,6 +205,8 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Asset.Intercept(interceptors...)
+	c.AssetTag.Intercept(interceptors...)
 	c.Location.Intercept(interceptors...)
 	c.Tag.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
@@ -199,6 +215,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AssetMutation:
+		return c.Asset.mutate(ctx, m)
+	case *AssetTagMutation:
+		return c.AssetTag.mutate(ctx, m)
 	case *LocationMutation:
 		return c.Location.mutate(ctx, m)
 	case *TagMutation:
@@ -207,6 +227,354 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AssetClient is a client for the Asset schema.
+type AssetClient struct {
+	config
+}
+
+// NewAssetClient returns a client for the Asset from the given config.
+func NewAssetClient(c config) *AssetClient {
+	return &AssetClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `asset.Hooks(f(g(h())))`.
+func (c *AssetClient) Use(hooks ...Hook) {
+	c.hooks.Asset = append(c.hooks.Asset, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `asset.Intercept(f(g(h())))`.
+func (c *AssetClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Asset = append(c.inters.Asset, interceptors...)
+}
+
+// Create returns a builder for creating a Asset entity.
+func (c *AssetClient) Create() *AssetCreate {
+	mutation := newAssetMutation(c.config, OpCreate)
+	return &AssetCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Asset entities.
+func (c *AssetClient) CreateBulk(builders ...*AssetCreate) *AssetCreateBulk {
+	return &AssetCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Asset.
+func (c *AssetClient) Update() *AssetUpdate {
+	mutation := newAssetMutation(c.config, OpUpdate)
+	return &AssetUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AssetClient) UpdateOne(a *Asset) *AssetUpdateOne {
+	mutation := newAssetMutation(c.config, OpUpdateOne, withAsset(a))
+	return &AssetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AssetClient) UpdateOneID(id uuid.UUID) *AssetUpdateOne {
+	mutation := newAssetMutation(c.config, OpUpdateOne, withAssetID(id))
+	return &AssetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Asset.
+func (c *AssetClient) Delete() *AssetDelete {
+	mutation := newAssetMutation(c.config, OpDelete)
+	return &AssetDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AssetClient) DeleteOne(a *Asset) *AssetDeleteOne {
+	return c.DeleteOneID(a.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AssetClient) DeleteOneID(id uuid.UUID) *AssetDeleteOne {
+	builder := c.Delete().Where(asset.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AssetDeleteOne{builder}
+}
+
+// Query returns a query builder for Asset.
+func (c *AssetClient) Query() *AssetQuery {
+	return &AssetQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAsset},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Asset entity by its id.
+func (c *AssetClient) Get(ctx context.Context, id uuid.UUID) (*Asset, error) {
+	return c.Query().Where(asset.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AssetClient) GetX(ctx context.Context, id uuid.UUID) *Asset {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryParent queries the parent edge of a Asset.
+func (c *AssetClient) QueryParent(a *Asset) *AssetQuery {
+	query := (&AssetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(asset.Table, asset.FieldID, id),
+			sqlgraph.To(asset.Table, asset.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, asset.ParentTable, asset.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a Asset.
+func (c *AssetClient) QueryChildren(a *Asset) *AssetQuery {
+	query := (&AssetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(asset.Table, asset.FieldID, id),
+			sqlgraph.To(asset.Table, asset.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, asset.ChildrenTable, asset.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLocation queries the location edge of a Asset.
+func (c *AssetClient) QueryLocation(a *Asset) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(asset.Table, asset.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, asset.LocationTable, asset.LocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTags queries the tags edge of a Asset.
+func (c *AssetClient) QueryTags(a *Asset) *TagQuery {
+	query := (&TagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(asset.Table, asset.FieldID, id),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, asset.TagsTable, asset.TagsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAssetTags queries the asset_tags edge of a Asset.
+func (c *AssetClient) QueryAssetTags(a *Asset) *AssetTagQuery {
+	query := (&AssetTagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(asset.Table, asset.FieldID, id),
+			sqlgraph.To(assettag.Table, assettag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, asset.AssetTagsTable, asset.AssetTagsColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AssetClient) Hooks() []Hook {
+	return c.hooks.Asset
+}
+
+// Interceptors returns the client interceptors.
+func (c *AssetClient) Interceptors() []Interceptor {
+	return c.inters.Asset
+}
+
+func (c *AssetClient) mutate(ctx context.Context, m *AssetMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AssetCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AssetUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AssetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AssetDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Asset mutation op: %q", m.Op())
+	}
+}
+
+// AssetTagClient is a client for the AssetTag schema.
+type AssetTagClient struct {
+	config
+}
+
+// NewAssetTagClient returns a client for the AssetTag from the given config.
+func NewAssetTagClient(c config) *AssetTagClient {
+	return &AssetTagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `assettag.Hooks(f(g(h())))`.
+func (c *AssetTagClient) Use(hooks ...Hook) {
+	c.hooks.AssetTag = append(c.hooks.AssetTag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `assettag.Intercept(f(g(h())))`.
+func (c *AssetTagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AssetTag = append(c.inters.AssetTag, interceptors...)
+}
+
+// Create returns a builder for creating a AssetTag entity.
+func (c *AssetTagClient) Create() *AssetTagCreate {
+	mutation := newAssetTagMutation(c.config, OpCreate)
+	return &AssetTagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AssetTag entities.
+func (c *AssetTagClient) CreateBulk(builders ...*AssetTagCreate) *AssetTagCreateBulk {
+	return &AssetTagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AssetTag.
+func (c *AssetTagClient) Update() *AssetTagUpdate {
+	mutation := newAssetTagMutation(c.config, OpUpdate)
+	return &AssetTagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AssetTagClient) UpdateOne(at *AssetTag) *AssetTagUpdateOne {
+	mutation := newAssetTagMutation(c.config, OpUpdateOne, withAssetTag(at))
+	return &AssetTagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AssetTagClient) UpdateOneID(id uuid.UUID) *AssetTagUpdateOne {
+	mutation := newAssetTagMutation(c.config, OpUpdateOne, withAssetTagID(id))
+	return &AssetTagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AssetTag.
+func (c *AssetTagClient) Delete() *AssetTagDelete {
+	mutation := newAssetTagMutation(c.config, OpDelete)
+	return &AssetTagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AssetTagClient) DeleteOne(at *AssetTag) *AssetTagDeleteOne {
+	return c.DeleteOneID(at.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AssetTagClient) DeleteOneID(id uuid.UUID) *AssetTagDeleteOne {
+	builder := c.Delete().Where(assettag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AssetTagDeleteOne{builder}
+}
+
+// Query returns a query builder for AssetTag.
+func (c *AssetTagClient) Query() *AssetTagQuery {
+	return &AssetTagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAssetTag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AssetTag entity by its id.
+func (c *AssetTagClient) Get(ctx context.Context, id uuid.UUID) (*AssetTag, error) {
+	return c.Query().Where(assettag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AssetTagClient) GetX(ctx context.Context, id uuid.UUID) *AssetTag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAsset queries the asset edge of a AssetTag.
+func (c *AssetTagClient) QueryAsset(at *AssetTag) *AssetQuery {
+	query := (&AssetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := at.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(assettag.Table, assettag.FieldID, id),
+			sqlgraph.To(asset.Table, asset.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, assettag.AssetTable, assettag.AssetColumn),
+		)
+		fromV = sqlgraph.Neighbors(at.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTag queries the tag edge of a AssetTag.
+func (c *AssetTagClient) QueryTag(at *AssetTag) *TagQuery {
+	query := (&TagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := at.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(assettag.Table, assettag.FieldID, id),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, assettag.TagTable, assettag.TagColumn),
+		)
+		fromV = sqlgraph.Neighbors(at.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AssetTagClient) Hooks() []Hook {
+	return c.hooks.AssetTag
+}
+
+// Interceptors returns the client interceptors.
+func (c *AssetTagClient) Interceptors() []Interceptor {
+	return c.inters.AssetTag
+}
+
+func (c *AssetTagClient) mutate(ctx context.Context, m *AssetTagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AssetTagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AssetTagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AssetTagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AssetTagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AssetTag mutation op: %q", m.Op())
 	}
 }
 
@@ -453,6 +821,38 @@ func (c *TagClient) GetX(ctx context.Context, id uuid.UUID) *Tag {
 	return obj
 }
 
+// QueryAsset queries the asset edge of a Tag.
+func (c *TagClient) QueryAsset(t *Tag) *AssetQuery {
+	query := (&AssetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(asset.Table, asset.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, tag.AssetTable, tag.AssetPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAssetTag queries the asset_tag edge of a Tag.
+func (c *TagClient) QueryAssetTag(t *Tag) *AssetTagQuery {
+	query := (&AssetTagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(assettag.Table, assettag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, tag.AssetTagTable, tag.AssetTagColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TagClient) Hooks() []Hook {
 	return c.hooks.Tag
@@ -631,9 +1031,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Location, Tag, User []ent.Hook
+		Asset, AssetTag, Location, Tag, User []ent.Hook
 	}
 	inters struct {
-		Location, Tag, User []ent.Interceptor
+		Asset, AssetTag, Location, Tag, User []ent.Interceptor
 	}
 )

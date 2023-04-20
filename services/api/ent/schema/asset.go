@@ -9,25 +9,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type Location struct {
+type Asset struct {
 	ent.Schema
 }
 
-func (Location) Fields() []ent.Field {
+func (Asset) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.UUID("parent_id", uuid.UUID{}).Optional(),
+		field.UUID("location_id", uuid.UUID{}).Optional(),
 		field.Text("name").Optional(),
 	}
 }
 
-func (Location) Edges() []ent.Edge {
+func (Asset) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("children", Location.Type).From("parent").Unique().Field("parent_id"),
+		edge.To("children", Asset.Type).From("parent").Unique().Field("parent_id"),
+		edge.To("location", Location.Type).Unique().Field("location_id"),
+		edge.To("tags", Tag.Type).Through("asset_tags", AssetTag.Type),
 	}
 }
 
-func (Location) Annotations() []schema.Annotation {
+func (Asset) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.RelayConnection(),
 		entgql.QueryField(),

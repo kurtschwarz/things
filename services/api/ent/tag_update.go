@@ -6,12 +6,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/predicate"
 	"things-api/ent/tag"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // TagUpdate is the builder for updating Tag entities.
@@ -47,9 +50,81 @@ func (tu *TagUpdate) ClearName() *TagUpdate {
 	return tu
 }
 
+// AddAssetIDs adds the "asset" edge to the Asset entity by IDs.
+func (tu *TagUpdate) AddAssetIDs(ids ...uuid.UUID) *TagUpdate {
+	tu.mutation.AddAssetIDs(ids...)
+	return tu
+}
+
+// AddAsset adds the "asset" edges to the Asset entity.
+func (tu *TagUpdate) AddAsset(a ...*Asset) *TagUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tu.AddAssetIDs(ids...)
+}
+
+// AddAssetTagIDs adds the "asset_tag" edge to the AssetTag entity by IDs.
+func (tu *TagUpdate) AddAssetTagIDs(ids ...uuid.UUID) *TagUpdate {
+	tu.mutation.AddAssetTagIDs(ids...)
+	return tu
+}
+
+// AddAssetTag adds the "asset_tag" edges to the AssetTag entity.
+func (tu *TagUpdate) AddAssetTag(a ...*AssetTag) *TagUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tu.AddAssetTagIDs(ids...)
+}
+
 // Mutation returns the TagMutation object of the builder.
 func (tu *TagUpdate) Mutation() *TagMutation {
 	return tu.mutation
+}
+
+// ClearAsset clears all "asset" edges to the Asset entity.
+func (tu *TagUpdate) ClearAsset() *TagUpdate {
+	tu.mutation.ClearAsset()
+	return tu
+}
+
+// RemoveAssetIDs removes the "asset" edge to Asset entities by IDs.
+func (tu *TagUpdate) RemoveAssetIDs(ids ...uuid.UUID) *TagUpdate {
+	tu.mutation.RemoveAssetIDs(ids...)
+	return tu
+}
+
+// RemoveAsset removes "asset" edges to Asset entities.
+func (tu *TagUpdate) RemoveAsset(a ...*Asset) *TagUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tu.RemoveAssetIDs(ids...)
+}
+
+// ClearAssetTag clears all "asset_tag" edges to the AssetTag entity.
+func (tu *TagUpdate) ClearAssetTag() *TagUpdate {
+	tu.mutation.ClearAssetTag()
+	return tu
+}
+
+// RemoveAssetTagIDs removes the "asset_tag" edge to AssetTag entities by IDs.
+func (tu *TagUpdate) RemoveAssetTagIDs(ids ...uuid.UUID) *TagUpdate {
+	tu.mutation.RemoveAssetTagIDs(ids...)
+	return tu
+}
+
+// RemoveAssetTag removes "asset_tag" edges to AssetTag entities.
+func (tu *TagUpdate) RemoveAssetTag(a ...*AssetTag) *TagUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tu.RemoveAssetTagIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -94,6 +169,117 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.NameCleared() {
 		_spec.ClearField(tag.FieldName, field.TypeString)
 	}
+	if tu.mutation.AssetCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		createE := &AssetTagCreate{config: tu.config, mutation: newAssetTagMutation(tu.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedAssetIDs(); len(nodes) > 0 && !tu.mutation.AssetCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AssetTagCreate{config: tu.config, mutation: newAssetTagMutation(tu.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.AssetIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AssetTagCreate{config: tu.config, mutation: newAssetTagMutation(tu.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.AssetTagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedAssetTagIDs(); len(nodes) > 0 && !tu.mutation.AssetTagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.AssetTagIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tag.Label}
@@ -134,9 +320,81 @@ func (tuo *TagUpdateOne) ClearName() *TagUpdateOne {
 	return tuo
 }
 
+// AddAssetIDs adds the "asset" edge to the Asset entity by IDs.
+func (tuo *TagUpdateOne) AddAssetIDs(ids ...uuid.UUID) *TagUpdateOne {
+	tuo.mutation.AddAssetIDs(ids...)
+	return tuo
+}
+
+// AddAsset adds the "asset" edges to the Asset entity.
+func (tuo *TagUpdateOne) AddAsset(a ...*Asset) *TagUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tuo.AddAssetIDs(ids...)
+}
+
+// AddAssetTagIDs adds the "asset_tag" edge to the AssetTag entity by IDs.
+func (tuo *TagUpdateOne) AddAssetTagIDs(ids ...uuid.UUID) *TagUpdateOne {
+	tuo.mutation.AddAssetTagIDs(ids...)
+	return tuo
+}
+
+// AddAssetTag adds the "asset_tag" edges to the AssetTag entity.
+func (tuo *TagUpdateOne) AddAssetTag(a ...*AssetTag) *TagUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tuo.AddAssetTagIDs(ids...)
+}
+
 // Mutation returns the TagMutation object of the builder.
 func (tuo *TagUpdateOne) Mutation() *TagMutation {
 	return tuo.mutation
+}
+
+// ClearAsset clears all "asset" edges to the Asset entity.
+func (tuo *TagUpdateOne) ClearAsset() *TagUpdateOne {
+	tuo.mutation.ClearAsset()
+	return tuo
+}
+
+// RemoveAssetIDs removes the "asset" edge to Asset entities by IDs.
+func (tuo *TagUpdateOne) RemoveAssetIDs(ids ...uuid.UUID) *TagUpdateOne {
+	tuo.mutation.RemoveAssetIDs(ids...)
+	return tuo
+}
+
+// RemoveAsset removes "asset" edges to Asset entities.
+func (tuo *TagUpdateOne) RemoveAsset(a ...*Asset) *TagUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tuo.RemoveAssetIDs(ids...)
+}
+
+// ClearAssetTag clears all "asset_tag" edges to the AssetTag entity.
+func (tuo *TagUpdateOne) ClearAssetTag() *TagUpdateOne {
+	tuo.mutation.ClearAssetTag()
+	return tuo
+}
+
+// RemoveAssetTagIDs removes the "asset_tag" edge to AssetTag entities by IDs.
+func (tuo *TagUpdateOne) RemoveAssetTagIDs(ids ...uuid.UUID) *TagUpdateOne {
+	tuo.mutation.RemoveAssetTagIDs(ids...)
+	return tuo
+}
+
+// RemoveAssetTag removes "asset_tag" edges to AssetTag entities.
+func (tuo *TagUpdateOne) RemoveAssetTag(a ...*AssetTag) *TagUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tuo.RemoveAssetTagIDs(ids...)
 }
 
 // Where appends a list predicates to the TagUpdate builder.
@@ -210,6 +468,117 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	}
 	if tuo.mutation.NameCleared() {
 		_spec.ClearField(tag.FieldName, field.TypeString)
+	}
+	if tuo.mutation.AssetCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		createE := &AssetTagCreate{config: tuo.config, mutation: newAssetTagMutation(tuo.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedAssetIDs(); len(nodes) > 0 && !tuo.mutation.AssetCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AssetTagCreate{config: tuo.config, mutation: newAssetTagMutation(tuo.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.AssetIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AssetTagCreate{config: tuo.config, mutation: newAssetTagMutation(tuo.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.AssetTagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedAssetTagIDs(); len(nodes) > 0 && !tuo.mutation.AssetTagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.AssetTagIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Tag{config: tuo.config}
 	_spec.Assign = _node.assignValues

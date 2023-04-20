@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/predicate"
 	"things-api/ent/tag"
@@ -26,10 +28,1345 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeAsset    = "Asset"
+	TypeAssetTag = "AssetTag"
 	TypeLocation = "Location"
 	TypeTag      = "Tag"
 	TypeUser     = "User"
 )
+
+// AssetMutation represents an operation that mutates the Asset nodes in the graph.
+type AssetMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	name              *string
+	clearedFields     map[string]struct{}
+	parent            *uuid.UUID
+	clearedparent     bool
+	children          map[uuid.UUID]struct{}
+	removedchildren   map[uuid.UUID]struct{}
+	clearedchildren   bool
+	location          *uuid.UUID
+	clearedlocation   bool
+	tags              map[uuid.UUID]struct{}
+	removedtags       map[uuid.UUID]struct{}
+	clearedtags       bool
+	asset_tags        map[uuid.UUID]struct{}
+	removedasset_tags map[uuid.UUID]struct{}
+	clearedasset_tags bool
+	done              bool
+	oldValue          func(context.Context) (*Asset, error)
+	predicates        []predicate.Asset
+}
+
+var _ ent.Mutation = (*AssetMutation)(nil)
+
+// assetOption allows management of the mutation configuration using functional options.
+type assetOption func(*AssetMutation)
+
+// newAssetMutation creates new mutation for the Asset entity.
+func newAssetMutation(c config, op Op, opts ...assetOption) *AssetMutation {
+	m := &AssetMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAsset,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAssetID sets the ID field of the mutation.
+func withAssetID(id uuid.UUID) assetOption {
+	return func(m *AssetMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Asset
+		)
+		m.oldValue = func(ctx context.Context) (*Asset, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Asset.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAsset sets the old Asset of the mutation.
+func withAsset(node *Asset) assetOption {
+	return func(m *AssetMutation) {
+		m.oldValue = func(context.Context) (*Asset, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AssetMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AssetMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Asset entities.
+func (m *AssetMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AssetMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AssetMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Asset.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetParentID sets the "parent_id" field.
+func (m *AssetMutation) SetParentID(u uuid.UUID) {
+	m.parent = &u
+}
+
+// ParentID returns the value of the "parent_id" field in the mutation.
+func (m *AssetMutation) ParentID() (r uuid.UUID, exists bool) {
+	v := m.parent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParentID returns the old "parent_id" field's value of the Asset entity.
+// If the Asset object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetMutation) OldParentID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParentID: %w", err)
+	}
+	return oldValue.ParentID, nil
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (m *AssetMutation) ClearParentID() {
+	m.parent = nil
+	m.clearedFields[asset.FieldParentID] = struct{}{}
+}
+
+// ParentIDCleared returns if the "parent_id" field was cleared in this mutation.
+func (m *AssetMutation) ParentIDCleared() bool {
+	_, ok := m.clearedFields[asset.FieldParentID]
+	return ok
+}
+
+// ResetParentID resets all changes to the "parent_id" field.
+func (m *AssetMutation) ResetParentID() {
+	m.parent = nil
+	delete(m.clearedFields, asset.FieldParentID)
+}
+
+// SetLocationID sets the "location_id" field.
+func (m *AssetMutation) SetLocationID(u uuid.UUID) {
+	m.location = &u
+}
+
+// LocationID returns the value of the "location_id" field in the mutation.
+func (m *AssetMutation) LocationID() (r uuid.UUID, exists bool) {
+	v := m.location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocationID returns the old "location_id" field's value of the Asset entity.
+// If the Asset object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetMutation) OldLocationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocationID: %w", err)
+	}
+	return oldValue.LocationID, nil
+}
+
+// ClearLocationID clears the value of the "location_id" field.
+func (m *AssetMutation) ClearLocationID() {
+	m.location = nil
+	m.clearedFields[asset.FieldLocationID] = struct{}{}
+}
+
+// LocationIDCleared returns if the "location_id" field was cleared in this mutation.
+func (m *AssetMutation) LocationIDCleared() bool {
+	_, ok := m.clearedFields[asset.FieldLocationID]
+	return ok
+}
+
+// ResetLocationID resets all changes to the "location_id" field.
+func (m *AssetMutation) ResetLocationID() {
+	m.location = nil
+	delete(m.clearedFields, asset.FieldLocationID)
+}
+
+// SetName sets the "name" field.
+func (m *AssetMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *AssetMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Asset entity.
+// If the Asset object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *AssetMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[asset.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *AssetMutation) NameCleared() bool {
+	_, ok := m.clearedFields[asset.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *AssetMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, asset.FieldName)
+}
+
+// ClearParent clears the "parent" edge to the Asset entity.
+func (m *AssetMutation) ClearParent() {
+	m.clearedparent = true
+}
+
+// ParentCleared reports if the "parent" edge to the Asset entity was cleared.
+func (m *AssetMutation) ParentCleared() bool {
+	return m.ParentIDCleared() || m.clearedparent
+}
+
+// ParentIDs returns the "parent" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentID instead. It exists only for internal usage by the builders.
+func (m *AssetMutation) ParentIDs() (ids []uuid.UUID) {
+	if id := m.parent; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParent resets all changes to the "parent" edge.
+func (m *AssetMutation) ResetParent() {
+	m.parent = nil
+	m.clearedparent = false
+}
+
+// AddChildIDs adds the "children" edge to the Asset entity by ids.
+func (m *AssetMutation) AddChildIDs(ids ...uuid.UUID) {
+	if m.children == nil {
+		m.children = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.children[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChildren clears the "children" edge to the Asset entity.
+func (m *AssetMutation) ClearChildren() {
+	m.clearedchildren = true
+}
+
+// ChildrenCleared reports if the "children" edge to the Asset entity was cleared.
+func (m *AssetMutation) ChildrenCleared() bool {
+	return m.clearedchildren
+}
+
+// RemoveChildIDs removes the "children" edge to the Asset entity by IDs.
+func (m *AssetMutation) RemoveChildIDs(ids ...uuid.UUID) {
+	if m.removedchildren == nil {
+		m.removedchildren = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.children, ids[i])
+		m.removedchildren[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChildren returns the removed IDs of the "children" edge to the Asset entity.
+func (m *AssetMutation) RemovedChildrenIDs() (ids []uuid.UUID) {
+	for id := range m.removedchildren {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChildrenIDs returns the "children" edge IDs in the mutation.
+func (m *AssetMutation) ChildrenIDs() (ids []uuid.UUID) {
+	for id := range m.children {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChildren resets all changes to the "children" edge.
+func (m *AssetMutation) ResetChildren() {
+	m.children = nil
+	m.clearedchildren = false
+	m.removedchildren = nil
+}
+
+// ClearLocation clears the "location" edge to the Location entity.
+func (m *AssetMutation) ClearLocation() {
+	m.clearedlocation = true
+}
+
+// LocationCleared reports if the "location" edge to the Location entity was cleared.
+func (m *AssetMutation) LocationCleared() bool {
+	return m.LocationIDCleared() || m.clearedlocation
+}
+
+// LocationIDs returns the "location" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LocationID instead. It exists only for internal usage by the builders.
+func (m *AssetMutation) LocationIDs() (ids []uuid.UUID) {
+	if id := m.location; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLocation resets all changes to the "location" edge.
+func (m *AssetMutation) ResetLocation() {
+	m.location = nil
+	m.clearedlocation = false
+}
+
+// AddTagIDs adds the "tags" edge to the Tag entity by ids.
+func (m *AssetMutation) AddTagIDs(ids ...uuid.UUID) {
+	if m.tags == nil {
+		m.tags = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.tags[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTags clears the "tags" edge to the Tag entity.
+func (m *AssetMutation) ClearTags() {
+	m.clearedtags = true
+}
+
+// TagsCleared reports if the "tags" edge to the Tag entity was cleared.
+func (m *AssetMutation) TagsCleared() bool {
+	return m.clearedtags
+}
+
+// RemoveTagIDs removes the "tags" edge to the Tag entity by IDs.
+func (m *AssetMutation) RemoveTagIDs(ids ...uuid.UUID) {
+	if m.removedtags == nil {
+		m.removedtags = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.tags, ids[i])
+		m.removedtags[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTags returns the removed IDs of the "tags" edge to the Tag entity.
+func (m *AssetMutation) RemovedTagsIDs() (ids []uuid.UUID) {
+	for id := range m.removedtags {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TagsIDs returns the "tags" edge IDs in the mutation.
+func (m *AssetMutation) TagsIDs() (ids []uuid.UUID) {
+	for id := range m.tags {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTags resets all changes to the "tags" edge.
+func (m *AssetMutation) ResetTags() {
+	m.tags = nil
+	m.clearedtags = false
+	m.removedtags = nil
+}
+
+// AddAssetTagIDs adds the "asset_tags" edge to the AssetTag entity by ids.
+func (m *AssetMutation) AddAssetTagIDs(ids ...uuid.UUID) {
+	if m.asset_tags == nil {
+		m.asset_tags = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.asset_tags[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAssetTags clears the "asset_tags" edge to the AssetTag entity.
+func (m *AssetMutation) ClearAssetTags() {
+	m.clearedasset_tags = true
+}
+
+// AssetTagsCleared reports if the "asset_tags" edge to the AssetTag entity was cleared.
+func (m *AssetMutation) AssetTagsCleared() bool {
+	return m.clearedasset_tags
+}
+
+// RemoveAssetTagIDs removes the "asset_tags" edge to the AssetTag entity by IDs.
+func (m *AssetMutation) RemoveAssetTagIDs(ids ...uuid.UUID) {
+	if m.removedasset_tags == nil {
+		m.removedasset_tags = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.asset_tags, ids[i])
+		m.removedasset_tags[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAssetTags returns the removed IDs of the "asset_tags" edge to the AssetTag entity.
+func (m *AssetMutation) RemovedAssetTagsIDs() (ids []uuid.UUID) {
+	for id := range m.removedasset_tags {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AssetTagsIDs returns the "asset_tags" edge IDs in the mutation.
+func (m *AssetMutation) AssetTagsIDs() (ids []uuid.UUID) {
+	for id := range m.asset_tags {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAssetTags resets all changes to the "asset_tags" edge.
+func (m *AssetMutation) ResetAssetTags() {
+	m.asset_tags = nil
+	m.clearedasset_tags = false
+	m.removedasset_tags = nil
+}
+
+// Where appends a list predicates to the AssetMutation builder.
+func (m *AssetMutation) Where(ps ...predicate.Asset) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AssetMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AssetMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Asset, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AssetMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AssetMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Asset).
+func (m *AssetMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AssetMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.parent != nil {
+		fields = append(fields, asset.FieldParentID)
+	}
+	if m.location != nil {
+		fields = append(fields, asset.FieldLocationID)
+	}
+	if m.name != nil {
+		fields = append(fields, asset.FieldName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AssetMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case asset.FieldParentID:
+		return m.ParentID()
+	case asset.FieldLocationID:
+		return m.LocationID()
+	case asset.FieldName:
+		return m.Name()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AssetMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case asset.FieldParentID:
+		return m.OldParentID(ctx)
+	case asset.FieldLocationID:
+		return m.OldLocationID(ctx)
+	case asset.FieldName:
+		return m.OldName(ctx)
+	}
+	return nil, fmt.Errorf("unknown Asset field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AssetMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case asset.FieldParentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParentID(v)
+		return nil
+	case asset.FieldLocationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocationID(v)
+		return nil
+	case asset.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Asset field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AssetMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AssetMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AssetMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Asset numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AssetMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(asset.FieldParentID) {
+		fields = append(fields, asset.FieldParentID)
+	}
+	if m.FieldCleared(asset.FieldLocationID) {
+		fields = append(fields, asset.FieldLocationID)
+	}
+	if m.FieldCleared(asset.FieldName) {
+		fields = append(fields, asset.FieldName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AssetMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AssetMutation) ClearField(name string) error {
+	switch name {
+	case asset.FieldParentID:
+		m.ClearParentID()
+		return nil
+	case asset.FieldLocationID:
+		m.ClearLocationID()
+		return nil
+	case asset.FieldName:
+		m.ClearName()
+		return nil
+	}
+	return fmt.Errorf("unknown Asset nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AssetMutation) ResetField(name string) error {
+	switch name {
+	case asset.FieldParentID:
+		m.ResetParentID()
+		return nil
+	case asset.FieldLocationID:
+		m.ResetLocationID()
+		return nil
+	case asset.FieldName:
+		m.ResetName()
+		return nil
+	}
+	return fmt.Errorf("unknown Asset field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AssetMutation) AddedEdges() []string {
+	edges := make([]string, 0, 5)
+	if m.parent != nil {
+		edges = append(edges, asset.EdgeParent)
+	}
+	if m.children != nil {
+		edges = append(edges, asset.EdgeChildren)
+	}
+	if m.location != nil {
+		edges = append(edges, asset.EdgeLocation)
+	}
+	if m.tags != nil {
+		edges = append(edges, asset.EdgeTags)
+	}
+	if m.asset_tags != nil {
+		edges = append(edges, asset.EdgeAssetTags)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AssetMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case asset.EdgeParent:
+		if id := m.parent; id != nil {
+			return []ent.Value{*id}
+		}
+	case asset.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.children))
+		for id := range m.children {
+			ids = append(ids, id)
+		}
+		return ids
+	case asset.EdgeLocation:
+		if id := m.location; id != nil {
+			return []ent.Value{*id}
+		}
+	case asset.EdgeTags:
+		ids := make([]ent.Value, 0, len(m.tags))
+		for id := range m.tags {
+			ids = append(ids, id)
+		}
+		return ids
+	case asset.EdgeAssetTags:
+		ids := make([]ent.Value, 0, len(m.asset_tags))
+		for id := range m.asset_tags {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AssetMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 5)
+	if m.removedchildren != nil {
+		edges = append(edges, asset.EdgeChildren)
+	}
+	if m.removedtags != nil {
+		edges = append(edges, asset.EdgeTags)
+	}
+	if m.removedasset_tags != nil {
+		edges = append(edges, asset.EdgeAssetTags)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AssetMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case asset.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.removedchildren))
+		for id := range m.removedchildren {
+			ids = append(ids, id)
+		}
+		return ids
+	case asset.EdgeTags:
+		ids := make([]ent.Value, 0, len(m.removedtags))
+		for id := range m.removedtags {
+			ids = append(ids, id)
+		}
+		return ids
+	case asset.EdgeAssetTags:
+		ids := make([]ent.Value, 0, len(m.removedasset_tags))
+		for id := range m.removedasset_tags {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AssetMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 5)
+	if m.clearedparent {
+		edges = append(edges, asset.EdgeParent)
+	}
+	if m.clearedchildren {
+		edges = append(edges, asset.EdgeChildren)
+	}
+	if m.clearedlocation {
+		edges = append(edges, asset.EdgeLocation)
+	}
+	if m.clearedtags {
+		edges = append(edges, asset.EdgeTags)
+	}
+	if m.clearedasset_tags {
+		edges = append(edges, asset.EdgeAssetTags)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AssetMutation) EdgeCleared(name string) bool {
+	switch name {
+	case asset.EdgeParent:
+		return m.clearedparent
+	case asset.EdgeChildren:
+		return m.clearedchildren
+	case asset.EdgeLocation:
+		return m.clearedlocation
+	case asset.EdgeTags:
+		return m.clearedtags
+	case asset.EdgeAssetTags:
+		return m.clearedasset_tags
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AssetMutation) ClearEdge(name string) error {
+	switch name {
+	case asset.EdgeParent:
+		m.ClearParent()
+		return nil
+	case asset.EdgeLocation:
+		m.ClearLocation()
+		return nil
+	}
+	return fmt.Errorf("unknown Asset unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AssetMutation) ResetEdge(name string) error {
+	switch name {
+	case asset.EdgeParent:
+		m.ResetParent()
+		return nil
+	case asset.EdgeChildren:
+		m.ResetChildren()
+		return nil
+	case asset.EdgeLocation:
+		m.ResetLocation()
+		return nil
+	case asset.EdgeTags:
+		m.ResetTags()
+		return nil
+	case asset.EdgeAssetTags:
+		m.ResetAssetTags()
+		return nil
+	}
+	return fmt.Errorf("unknown Asset edge %s", name)
+}
+
+// AssetTagMutation represents an operation that mutates the AssetTag nodes in the graph.
+type AssetTagMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	clearedFields map[string]struct{}
+	asset         *uuid.UUID
+	clearedasset  bool
+	tag           *uuid.UUID
+	clearedtag    bool
+	done          bool
+	oldValue      func(context.Context) (*AssetTag, error)
+	predicates    []predicate.AssetTag
+}
+
+var _ ent.Mutation = (*AssetTagMutation)(nil)
+
+// assettagOption allows management of the mutation configuration using functional options.
+type assettagOption func(*AssetTagMutation)
+
+// newAssetTagMutation creates new mutation for the AssetTag entity.
+func newAssetTagMutation(c config, op Op, opts ...assettagOption) *AssetTagMutation {
+	m := &AssetTagMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAssetTag,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAssetTagID sets the ID field of the mutation.
+func withAssetTagID(id uuid.UUID) assettagOption {
+	return func(m *AssetTagMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AssetTag
+		)
+		m.oldValue = func(ctx context.Context) (*AssetTag, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AssetTag.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAssetTag sets the old AssetTag of the mutation.
+func withAssetTag(node *AssetTag) assettagOption {
+	return func(m *AssetTagMutation) {
+		m.oldValue = func(context.Context) (*AssetTag, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AssetTagMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AssetTagMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of AssetTag entities.
+func (m *AssetTagMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AssetTagMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AssetTagMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AssetTag.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetAssetID sets the "asset_id" field.
+func (m *AssetTagMutation) SetAssetID(u uuid.UUID) {
+	m.asset = &u
+}
+
+// AssetID returns the value of the "asset_id" field in the mutation.
+func (m *AssetTagMutation) AssetID() (r uuid.UUID, exists bool) {
+	v := m.asset
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssetID returns the old "asset_id" field's value of the AssetTag entity.
+// If the AssetTag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetTagMutation) OldAssetID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssetID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssetID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssetID: %w", err)
+	}
+	return oldValue.AssetID, nil
+}
+
+// ResetAssetID resets all changes to the "asset_id" field.
+func (m *AssetTagMutation) ResetAssetID() {
+	m.asset = nil
+}
+
+// SetTagID sets the "tag_id" field.
+func (m *AssetTagMutation) SetTagID(u uuid.UUID) {
+	m.tag = &u
+}
+
+// TagID returns the value of the "tag_id" field in the mutation.
+func (m *AssetTagMutation) TagID() (r uuid.UUID, exists bool) {
+	v := m.tag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTagID returns the old "tag_id" field's value of the AssetTag entity.
+// If the AssetTag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetTagMutation) OldTagID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTagID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTagID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTagID: %w", err)
+	}
+	return oldValue.TagID, nil
+}
+
+// ResetTagID resets all changes to the "tag_id" field.
+func (m *AssetTagMutation) ResetTagID() {
+	m.tag = nil
+}
+
+// ClearAsset clears the "asset" edge to the Asset entity.
+func (m *AssetTagMutation) ClearAsset() {
+	m.clearedasset = true
+}
+
+// AssetCleared reports if the "asset" edge to the Asset entity was cleared.
+func (m *AssetTagMutation) AssetCleared() bool {
+	return m.clearedasset
+}
+
+// AssetIDs returns the "asset" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AssetID instead. It exists only for internal usage by the builders.
+func (m *AssetTagMutation) AssetIDs() (ids []uuid.UUID) {
+	if id := m.asset; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAsset resets all changes to the "asset" edge.
+func (m *AssetTagMutation) ResetAsset() {
+	m.asset = nil
+	m.clearedasset = false
+}
+
+// ClearTag clears the "tag" edge to the Tag entity.
+func (m *AssetTagMutation) ClearTag() {
+	m.clearedtag = true
+}
+
+// TagCleared reports if the "tag" edge to the Tag entity was cleared.
+func (m *AssetTagMutation) TagCleared() bool {
+	return m.clearedtag
+}
+
+// TagIDs returns the "tag" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TagID instead. It exists only for internal usage by the builders.
+func (m *AssetTagMutation) TagIDs() (ids []uuid.UUID) {
+	if id := m.tag; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTag resets all changes to the "tag" edge.
+func (m *AssetTagMutation) ResetTag() {
+	m.tag = nil
+	m.clearedtag = false
+}
+
+// Where appends a list predicates to the AssetTagMutation builder.
+func (m *AssetTagMutation) Where(ps ...predicate.AssetTag) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AssetTagMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AssetTagMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AssetTag, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AssetTagMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AssetTagMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AssetTag).
+func (m *AssetTagMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AssetTagMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.asset != nil {
+		fields = append(fields, assettag.FieldAssetID)
+	}
+	if m.tag != nil {
+		fields = append(fields, assettag.FieldTagID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AssetTagMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case assettag.FieldAssetID:
+		return m.AssetID()
+	case assettag.FieldTagID:
+		return m.TagID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AssetTagMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case assettag.FieldAssetID:
+		return m.OldAssetID(ctx)
+	case assettag.FieldTagID:
+		return m.OldTagID(ctx)
+	}
+	return nil, fmt.Errorf("unknown AssetTag field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AssetTagMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case assettag.FieldAssetID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssetID(v)
+		return nil
+	case assettag.FieldTagID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTagID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AssetTag field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AssetTagMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AssetTagMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AssetTagMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown AssetTag numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AssetTagMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AssetTagMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AssetTagMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AssetTag nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AssetTagMutation) ResetField(name string) error {
+	switch name {
+	case assettag.FieldAssetID:
+		m.ResetAssetID()
+		return nil
+	case assettag.FieldTagID:
+		m.ResetTagID()
+		return nil
+	}
+	return fmt.Errorf("unknown AssetTag field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AssetTagMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.asset != nil {
+		edges = append(edges, assettag.EdgeAsset)
+	}
+	if m.tag != nil {
+		edges = append(edges, assettag.EdgeTag)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AssetTagMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case assettag.EdgeAsset:
+		if id := m.asset; id != nil {
+			return []ent.Value{*id}
+		}
+	case assettag.EdgeTag:
+		if id := m.tag; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AssetTagMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AssetTagMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AssetTagMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedasset {
+		edges = append(edges, assettag.EdgeAsset)
+	}
+	if m.clearedtag {
+		edges = append(edges, assettag.EdgeTag)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AssetTagMutation) EdgeCleared(name string) bool {
+	switch name {
+	case assettag.EdgeAsset:
+		return m.clearedasset
+	case assettag.EdgeTag:
+		return m.clearedtag
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AssetTagMutation) ClearEdge(name string) error {
+	switch name {
+	case assettag.EdgeAsset:
+		m.ClearAsset()
+		return nil
+	case assettag.EdgeTag:
+		m.ClearTag()
+		return nil
+	}
+	return fmt.Errorf("unknown AssetTag unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AssetTagMutation) ResetEdge(name string) error {
+	switch name {
+	case assettag.EdgeAsset:
+		m.ResetAsset()
+		return nil
+	case assettag.EdgeTag:
+		m.ResetTag()
+		return nil
+	}
+	return fmt.Errorf("unknown AssetTag edge %s", name)
+}
 
 // LocationMutation represents an operation that mutates the Location nodes in the graph.
 type LocationMutation struct {
@@ -599,14 +1936,20 @@ func (m *LocationMutation) ResetEdge(name string) error {
 // TagMutation represents an operation that mutates the Tag nodes in the graph.
 type TagMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	name          *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Tag, error)
-	predicates    []predicate.Tag
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	name             *string
+	clearedFields    map[string]struct{}
+	asset            map[uuid.UUID]struct{}
+	removedasset     map[uuid.UUID]struct{}
+	clearedasset     bool
+	asset_tag        map[uuid.UUID]struct{}
+	removedasset_tag map[uuid.UUID]struct{}
+	clearedasset_tag bool
+	done             bool
+	oldValue         func(context.Context) (*Tag, error)
+	predicates       []predicate.Tag
 }
 
 var _ ent.Mutation = (*TagMutation)(nil)
@@ -762,6 +2105,114 @@ func (m *TagMutation) ResetName() {
 	delete(m.clearedFields, tag.FieldName)
 }
 
+// AddAssetIDs adds the "asset" edge to the Asset entity by ids.
+func (m *TagMutation) AddAssetIDs(ids ...uuid.UUID) {
+	if m.asset == nil {
+		m.asset = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.asset[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAsset clears the "asset" edge to the Asset entity.
+func (m *TagMutation) ClearAsset() {
+	m.clearedasset = true
+}
+
+// AssetCleared reports if the "asset" edge to the Asset entity was cleared.
+func (m *TagMutation) AssetCleared() bool {
+	return m.clearedasset
+}
+
+// RemoveAssetIDs removes the "asset" edge to the Asset entity by IDs.
+func (m *TagMutation) RemoveAssetIDs(ids ...uuid.UUID) {
+	if m.removedasset == nil {
+		m.removedasset = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.asset, ids[i])
+		m.removedasset[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAsset returns the removed IDs of the "asset" edge to the Asset entity.
+func (m *TagMutation) RemovedAssetIDs() (ids []uuid.UUID) {
+	for id := range m.removedasset {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AssetIDs returns the "asset" edge IDs in the mutation.
+func (m *TagMutation) AssetIDs() (ids []uuid.UUID) {
+	for id := range m.asset {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAsset resets all changes to the "asset" edge.
+func (m *TagMutation) ResetAsset() {
+	m.asset = nil
+	m.clearedasset = false
+	m.removedasset = nil
+}
+
+// AddAssetTagIDs adds the "asset_tag" edge to the AssetTag entity by ids.
+func (m *TagMutation) AddAssetTagIDs(ids ...uuid.UUID) {
+	if m.asset_tag == nil {
+		m.asset_tag = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.asset_tag[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAssetTag clears the "asset_tag" edge to the AssetTag entity.
+func (m *TagMutation) ClearAssetTag() {
+	m.clearedasset_tag = true
+}
+
+// AssetTagCleared reports if the "asset_tag" edge to the AssetTag entity was cleared.
+func (m *TagMutation) AssetTagCleared() bool {
+	return m.clearedasset_tag
+}
+
+// RemoveAssetTagIDs removes the "asset_tag" edge to the AssetTag entity by IDs.
+func (m *TagMutation) RemoveAssetTagIDs(ids ...uuid.UUID) {
+	if m.removedasset_tag == nil {
+		m.removedasset_tag = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.asset_tag, ids[i])
+		m.removedasset_tag[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAssetTag returns the removed IDs of the "asset_tag" edge to the AssetTag entity.
+func (m *TagMutation) RemovedAssetTagIDs() (ids []uuid.UUID) {
+	for id := range m.removedasset_tag {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AssetTagIDs returns the "asset_tag" edge IDs in the mutation.
+func (m *TagMutation) AssetTagIDs() (ids []uuid.UUID) {
+	for id := range m.asset_tag {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAssetTag resets all changes to the "asset_tag" edge.
+func (m *TagMutation) ResetAssetTag() {
+	m.asset_tag = nil
+	m.clearedasset_tag = false
+	m.removedasset_tag = nil
+}
+
 // Where appends a list predicates to the TagMutation builder.
 func (m *TagMutation) Where(ps ...predicate.Tag) {
 	m.predicates = append(m.predicates, ps...)
@@ -904,49 +2355,111 @@ func (m *TagMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TagMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.asset != nil {
+		edges = append(edges, tag.EdgeAsset)
+	}
+	if m.asset_tag != nil {
+		edges = append(edges, tag.EdgeAssetTag)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *TagMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case tag.EdgeAsset:
+		ids := make([]ent.Value, 0, len(m.asset))
+		for id := range m.asset {
+			ids = append(ids, id)
+		}
+		return ids
+	case tag.EdgeAssetTag:
+		ids := make([]ent.Value, 0, len(m.asset_tag))
+		for id := range m.asset_tag {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TagMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.removedasset != nil {
+		edges = append(edges, tag.EdgeAsset)
+	}
+	if m.removedasset_tag != nil {
+		edges = append(edges, tag.EdgeAssetTag)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *TagMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case tag.EdgeAsset:
+		ids := make([]ent.Value, 0, len(m.removedasset))
+		for id := range m.removedasset {
+			ids = append(ids, id)
+		}
+		return ids
+	case tag.EdgeAssetTag:
+		ids := make([]ent.Value, 0, len(m.removedasset_tag))
+		for id := range m.removedasset_tag {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TagMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.clearedasset {
+		edges = append(edges, tag.EdgeAsset)
+	}
+	if m.clearedasset_tag {
+		edges = append(edges, tag.EdgeAssetTag)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *TagMutation) EdgeCleared(name string) bool {
+	switch name {
+	case tag.EdgeAsset:
+		return m.clearedasset
+	case tag.EdgeAssetTag:
+		return m.clearedasset_tag
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *TagMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Tag unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *TagMutation) ResetEdge(name string) error {
+	switch name {
+	case tag.EdgeAsset:
+		m.ResetAsset()
+		return nil
+	case tag.EdgeAssetTag:
+		m.ResetAssetTag()
+		return nil
+	}
 	return fmt.Errorf("unknown Tag edge %s", name)
 }
 

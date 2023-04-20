@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/schema"
 	"things-api/ent/tag"
@@ -15,6 +17,18 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	assetFields := schema.Asset{}.Fields()
+	_ = assetFields
+	// assetDescID is the schema descriptor for id field.
+	assetDescID := assetFields[0].Descriptor()
+	// asset.DefaultID holds the default value on creation for the id field.
+	asset.DefaultID = assetDescID.Default.(func() uuid.UUID)
+	assettagFields := schema.AssetTag{}.Fields()
+	_ = assettagFields
+	// assettagDescID is the schema descriptor for id field.
+	assettagDescID := assettagFields[0].Descriptor()
+	// assettag.DefaultID holds the default value on creation for the id field.
+	assettag.DefaultID = assettagDescID.Default.(func() uuid.UUID)
 	locationFields := schema.Location{}.Fields()
 	_ = locationFields
 	// locationDescID is the schema descriptor for id field.

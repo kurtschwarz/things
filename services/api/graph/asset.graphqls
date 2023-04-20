@@ -1,0 +1,4 @@
+extend type Mutation {
+  createAsset(input: CreateAssetInput!): Asset!
+  updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+}

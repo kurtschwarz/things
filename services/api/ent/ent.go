@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/tag"
 	"things-api/ent/user"
@@ -75,6 +77,8 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			asset.Table:    asset.ValidColumn,
+			assettag.Table: assettag.ValidColumn,
 			location.Table: location.ValidColumn,
 			tag.Table:      tag.ValidColumn,
 			user.Table:     user.ValidColumn,

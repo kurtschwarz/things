@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Asset is the predicate function for asset builders.
+type Asset func(*sql.Selector)
+
+// AssetTag is the predicate function for assettag builders.
+type AssetTag func(*sql.Selector)
+
 // Location is the predicate function for location builders.
 type Location func(*sql.Selector)
 

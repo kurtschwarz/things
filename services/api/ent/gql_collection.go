@@ -4,6 +4,8 @@ package ent
 
 import (
 	"context"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/tag"
 	"things-api/ent/user"
@@ -11,6 +13,243 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
 )
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (a *AssetQuery) CollectFields(ctx context.Context, satisfies ...string) (*AssetQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return a, nil
+	}
+	if err := a.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+func (a *AssetQuery) collectField(ctx context.Context, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(asset.Columns))
+		selectedFields = []string{asset.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+		case "parent":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AssetClient{config: a.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			a.withParent = query
+			if _, ok := fieldSeen[asset.FieldParentID]; !ok {
+				selectedFields = append(selectedFields, asset.FieldParentID)
+				fieldSeen[asset.FieldParentID] = struct{}{}
+			}
+		case "children":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AssetClient{config: a.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			a.WithNamedChildren(alias, func(wq *AssetQuery) {
+				*wq = *query
+			})
+		case "location":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&LocationClient{config: a.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			a.withLocation = query
+			if _, ok := fieldSeen[asset.FieldLocationID]; !ok {
+				selectedFields = append(selectedFields, asset.FieldLocationID)
+				fieldSeen[asset.FieldLocationID] = struct{}{}
+			}
+		case "tags":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&TagClient{config: a.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			a.WithNamedTags(alias, func(wq *TagQuery) {
+				*wq = *query
+			})
+		case "assetTags":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AssetTagClient{config: a.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			a.WithNamedAssetTags(alias, func(wq *AssetTagQuery) {
+				*wq = *query
+			})
+		case "parentID":
+			if _, ok := fieldSeen[asset.FieldParentID]; !ok {
+				selectedFields = append(selectedFields, asset.FieldParentID)
+				fieldSeen[asset.FieldParentID] = struct{}{}
+			}
+		case "locationID":
+			if _, ok := fieldSeen[asset.FieldLocationID]; !ok {
+				selectedFields = append(selectedFields, asset.FieldLocationID)
+				fieldSeen[asset.FieldLocationID] = struct{}{}
+			}
+		case "name":
+			if _, ok := fieldSeen[asset.FieldName]; !ok {
+				selectedFields = append(selectedFields, asset.FieldName)
+				fieldSeen[asset.FieldName] = struct{}{}
+			}
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		a.Select(selectedFields...)
+	}
+	return nil
+}
+
+type assetPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []AssetPaginateOption
+}
+
+func newAssetPaginateArgs(rv map[string]interface{}) *assetPaginateArgs {
+	args := &assetPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*AssetWhereInput); ok {
+		args.opts = append(args.opts, WithAssetFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (at *AssetTagQuery) CollectFields(ctx context.Context, satisfies ...string) (*AssetTagQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return at, nil
+	}
+	if err := at.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return at, nil
+}
+
+func (at *AssetTagQuery) collectField(ctx context.Context, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(assettag.Columns))
+		selectedFields = []string{assettag.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+		case "asset":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AssetClient{config: at.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			at.withAsset = query
+			if _, ok := fieldSeen[assettag.FieldAssetID]; !ok {
+				selectedFields = append(selectedFields, assettag.FieldAssetID)
+				fieldSeen[assettag.FieldAssetID] = struct{}{}
+			}
+		case "tag":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&TagClient{config: at.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			at.withTag = query
+			if _, ok := fieldSeen[assettag.FieldTagID]; !ok {
+				selectedFields = append(selectedFields, assettag.FieldTagID)
+				fieldSeen[assettag.FieldTagID] = struct{}{}
+			}
+		case "assetID":
+			if _, ok := fieldSeen[assettag.FieldAssetID]; !ok {
+				selectedFields = append(selectedFields, assettag.FieldAssetID)
+				fieldSeen[assettag.FieldAssetID] = struct{}{}
+			}
+		case "tagID":
+			if _, ok := fieldSeen[assettag.FieldTagID]; !ok {
+				selectedFields = append(selectedFields, assettag.FieldTagID)
+				fieldSeen[assettag.FieldTagID] = struct{}{}
+			}
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		at.Select(selectedFields...)
+	}
+	return nil
+}
+
+type assettagPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []AssetTagPaginateOption
+}
+
+func newAssetTagPaginateArgs(rv map[string]interface{}) *assettagPaginateArgs {
+	args := &assettagPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*AssetTagWhereInput); ok {
+		args.opts = append(args.opts, WithAssetTagFilter(v.Filter))
+	}
+	return args
+}
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (l *LocationQuery) CollectFields(ctx context.Context, satisfies ...string) (*LocationQuery, error) {
@@ -129,6 +368,30 @@ func (t *TagQuery) collectField(ctx context.Context, opCtx *graphql.OperationCon
 	)
 	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
 		switch field.Name {
+		case "asset":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AssetClient{config: t.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			t.WithNamedAsset(alias, func(wq *AssetQuery) {
+				*wq = *query
+			})
+		case "assetTag":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AssetTagClient{config: t.config}).Query()
+			)
+			if err := query.collectField(ctx, opCtx, field, path, satisfies...); err != nil {
+				return err
+			}
+			t.WithNamedAssetTag(alias, func(wq *AssetTagQuery) {
+				*wq = *query
+			})
 		case "name":
 			if _, ok := fieldSeen[tag.FieldName]; !ok {
 				selectedFields = append(selectedFields, tag.FieldName)

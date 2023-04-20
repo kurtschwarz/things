@@ -5,6 +5,8 @@ package ent
 import (
 	"context"
 	"errors"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/tag"
 	"things-api/ent/user"
@@ -96,6 +98,490 @@ func paginateLimit(first, last *int) int {
 		limit = *last + 1
 	}
 	return limit
+}
+
+// AssetEdge is the edge representation of Asset.
+type AssetEdge struct {
+	Node   *Asset `json:"node"`
+	Cursor Cursor `json:"cursor"`
+}
+
+// AssetConnection is the connection containing edges to Asset.
+type AssetConnection struct {
+	Edges      []*AssetEdge `json:"edges"`
+	PageInfo   PageInfo     `json:"pageInfo"`
+	TotalCount int          `json:"totalCount"`
+}
+
+func (c *AssetConnection) build(nodes []*Asset, pager *assetPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Asset
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Asset {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Asset {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*AssetEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &AssetEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// AssetPaginateOption enables pagination customization.
+type AssetPaginateOption func(*assetPager) error
+
+// WithAssetOrder configures pagination ordering.
+func WithAssetOrder(order *AssetOrder) AssetPaginateOption {
+	if order == nil {
+		order = DefaultAssetOrder
+	}
+	o := *order
+	return func(pager *assetPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultAssetOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithAssetFilter configures pagination filter.
+func WithAssetFilter(filter func(*AssetQuery) (*AssetQuery, error)) AssetPaginateOption {
+	return func(pager *assetPager) error {
+		if filter == nil {
+			return errors.New("AssetQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type assetPager struct {
+	reverse bool
+	order   *AssetOrder
+	filter  func(*AssetQuery) (*AssetQuery, error)
+}
+
+func newAssetPager(opts []AssetPaginateOption, reverse bool) (*assetPager, error) {
+	pager := &assetPager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultAssetOrder
+	}
+	return pager, nil
+}
+
+func (p *assetPager) applyFilter(query *AssetQuery) (*AssetQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *assetPager) toCursor(a *Asset) Cursor {
+	return p.order.Field.toCursor(a)
+}
+
+func (p *assetPager) applyCursors(query *AssetQuery, after, before *Cursor) (*AssetQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultAssetOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *assetPager) applyOrder(query *AssetQuery) *AssetQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultAssetOrder.Field {
+		query = query.Order(DefaultAssetOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	return query
+}
+
+func (p *assetPager) orderExpr(query *AssetQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultAssetOrder.Field {
+			b.Comma().Ident(DefaultAssetOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Asset.
+func (a *AssetQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...AssetPaginateOption,
+) (*AssetConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newAssetPager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if a, err = pager.applyFilter(a); err != nil {
+		return nil, err
+	}
+	conn := &AssetConnection{Edges: []*AssetEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = a.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	if a, err = pager.applyCursors(a, after, before); err != nil {
+		return nil, err
+	}
+	a = pager.applyOrder(a)
+	if limit := paginateLimit(first, last); limit != 0 {
+		a.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := a.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := a.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// AssetOrderField defines the ordering field of Asset.
+type AssetOrderField struct {
+	// Value extracts the ordering value from the given Asset.
+	Value    func(*Asset) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) asset.OrderOption
+	toCursor func(*Asset) Cursor
+}
+
+// AssetOrder defines the ordering of Asset.
+type AssetOrder struct {
+	Direction OrderDirection   `json:"direction"`
+	Field     *AssetOrderField `json:"field"`
+}
+
+// DefaultAssetOrder is the default ordering of Asset.
+var DefaultAssetOrder = &AssetOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &AssetOrderField{
+		Value: func(a *Asset) (ent.Value, error) {
+			return a.ID, nil
+		},
+		column: asset.FieldID,
+		toTerm: asset.ByID,
+		toCursor: func(a *Asset) Cursor {
+			return Cursor{ID: a.ID}
+		},
+	},
+}
+
+// ToEdge converts Asset into AssetEdge.
+func (a *Asset) ToEdge(order *AssetOrder) *AssetEdge {
+	if order == nil {
+		order = DefaultAssetOrder
+	}
+	return &AssetEdge{
+		Node:   a,
+		Cursor: order.Field.toCursor(a),
+	}
+}
+
+// AssetTagEdge is the edge representation of AssetTag.
+type AssetTagEdge struct {
+	Node   *AssetTag `json:"node"`
+	Cursor Cursor    `json:"cursor"`
+}
+
+// AssetTagConnection is the connection containing edges to AssetTag.
+type AssetTagConnection struct {
+	Edges      []*AssetTagEdge `json:"edges"`
+	PageInfo   PageInfo        `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
+func (c *AssetTagConnection) build(nodes []*AssetTag, pager *assettagPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *AssetTag
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *AssetTag {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *AssetTag {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*AssetTagEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &AssetTagEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// AssetTagPaginateOption enables pagination customization.
+type AssetTagPaginateOption func(*assettagPager) error
+
+// WithAssetTagOrder configures pagination ordering.
+func WithAssetTagOrder(order *AssetTagOrder) AssetTagPaginateOption {
+	if order == nil {
+		order = DefaultAssetTagOrder
+	}
+	o := *order
+	return func(pager *assettagPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultAssetTagOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithAssetTagFilter configures pagination filter.
+func WithAssetTagFilter(filter func(*AssetTagQuery) (*AssetTagQuery, error)) AssetTagPaginateOption {
+	return func(pager *assettagPager) error {
+		if filter == nil {
+			return errors.New("AssetTagQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type assettagPager struct {
+	reverse bool
+	order   *AssetTagOrder
+	filter  func(*AssetTagQuery) (*AssetTagQuery, error)
+}
+
+func newAssetTagPager(opts []AssetTagPaginateOption, reverse bool) (*assettagPager, error) {
+	pager := &assettagPager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultAssetTagOrder
+	}
+	return pager, nil
+}
+
+func (p *assettagPager) applyFilter(query *AssetTagQuery) (*AssetTagQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *assettagPager) toCursor(at *AssetTag) Cursor {
+	return p.order.Field.toCursor(at)
+}
+
+func (p *assettagPager) applyCursors(query *AssetTagQuery, after, before *Cursor) (*AssetTagQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultAssetTagOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *assettagPager) applyOrder(query *AssetTagQuery) *AssetTagQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultAssetTagOrder.Field {
+		query = query.Order(DefaultAssetTagOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	return query
+}
+
+func (p *assettagPager) orderExpr(query *AssetTagQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultAssetTagOrder.Field {
+			b.Comma().Ident(DefaultAssetTagOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to AssetTag.
+func (at *AssetTagQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...AssetTagPaginateOption,
+) (*AssetTagConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newAssetTagPager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if at, err = pager.applyFilter(at); err != nil {
+		return nil, err
+	}
+	conn := &AssetTagConnection{Edges: []*AssetTagEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = at.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	if at, err = pager.applyCursors(at, after, before); err != nil {
+		return nil, err
+	}
+	at = pager.applyOrder(at)
+	if limit := paginateLimit(first, last); limit != 0 {
+		at.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := at.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := at.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// AssetTagOrderField defines the ordering field of AssetTag.
+type AssetTagOrderField struct {
+	// Value extracts the ordering value from the given AssetTag.
+	Value    func(*AssetTag) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) assettag.OrderOption
+	toCursor func(*AssetTag) Cursor
+}
+
+// AssetTagOrder defines the ordering of AssetTag.
+type AssetTagOrder struct {
+	Direction OrderDirection      `json:"direction"`
+	Field     *AssetTagOrderField `json:"field"`
+}
+
+// DefaultAssetTagOrder is the default ordering of AssetTag.
+var DefaultAssetTagOrder = &AssetTagOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &AssetTagOrderField{
+		Value: func(at *AssetTag) (ent.Value, error) {
+			return at.ID, nil
+		},
+		column: assettag.FieldID,
+		toTerm: assettag.ByID,
+		toCursor: func(at *AssetTag) Cursor {
+			return Cursor{ID: at.ID}
+		},
+	},
+}
+
+// ToEdge converts AssetTag into AssetTagEdge.
+func (at *AssetTag) ToEdge(order *AssetTagOrder) *AssetTagEdge {
+	if order == nil {
+		order = DefaultAssetTagOrder
+	}
+	return &AssetTagEdge{
+		Node:   at,
+		Cursor: order.Field.toCursor(at),
+	}
 }
 
 // LocationEdge is the edge representation of Location.

@@ -6,6 +6,108 @@ import (
 	"github.com/google/uuid"
 )
 
+// CreateAssetInput represents a mutation input for creating assets.
+type CreateAssetInput struct {
+	Name       *string
+	ParentID   *uuid.UUID
+	ChildIDs   []uuid.UUID
+	LocationID *uuid.UUID
+	TagIDs     []uuid.UUID
+}
+
+// Mutate applies the CreateAssetInput on the AssetMutation builder.
+func (i *CreateAssetInput) Mutate(m *AssetMutation) {
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if v := i.ParentID; v != nil {
+		m.SetParentID(*v)
+	}
+	if v := i.ChildIDs; len(v) > 0 {
+		m.AddChildIDs(v...)
+	}
+	if v := i.LocationID; v != nil {
+		m.SetLocationID(*v)
+	}
+	if v := i.TagIDs; len(v) > 0 {
+		m.AddTagIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the CreateAssetInput on the AssetCreate builder.
+func (c *AssetCreate) SetInput(i CreateAssetInput) *AssetCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateAssetInput represents a mutation input for updating assets.
+type UpdateAssetInput struct {
+	ClearName      bool
+	Name           *string
+	ClearParent    bool
+	ParentID       *uuid.UUID
+	ClearChildren  bool
+	AddChildIDs    []uuid.UUID
+	RemoveChildIDs []uuid.UUID
+	ClearLocation  bool
+	LocationID     *uuid.UUID
+	ClearTags      bool
+	AddTagIDs      []uuid.UUID
+	RemoveTagIDs   []uuid.UUID
+}
+
+// Mutate applies the UpdateAssetInput on the AssetMutation builder.
+func (i *UpdateAssetInput) Mutate(m *AssetMutation) {
+	if i.ClearName {
+		m.ClearName()
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if i.ClearParent {
+		m.ClearParent()
+	}
+	if v := i.ParentID; v != nil {
+		m.SetParentID(*v)
+	}
+	if i.ClearChildren {
+		m.ClearChildren()
+	}
+	if v := i.AddChildIDs; len(v) > 0 {
+		m.AddChildIDs(v...)
+	}
+	if v := i.RemoveChildIDs; len(v) > 0 {
+		m.RemoveChildIDs(v...)
+	}
+	if i.ClearLocation {
+		m.ClearLocation()
+	}
+	if v := i.LocationID; v != nil {
+		m.SetLocationID(*v)
+	}
+	if i.ClearTags {
+		m.ClearTags()
+	}
+	if v := i.AddTagIDs; len(v) > 0 {
+		m.AddTagIDs(v...)
+	}
+	if v := i.RemoveTagIDs; len(v) > 0 {
+		m.RemoveTagIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateAssetInput on the AssetUpdate builder.
+func (c *AssetUpdate) SetInput(i UpdateAssetInput) *AssetUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateAssetInput on the AssetUpdateOne builder.
+func (c *AssetUpdateOne) SetInput(i UpdateAssetInput) *AssetUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateLocationInput represents a mutation input for creating locations.
 type CreateLocationInput struct {
 	Name     *string
@@ -82,13 +184,17 @@ func (c *LocationUpdateOne) SetInput(i UpdateLocationInput) *LocationUpdateOne {
 
 // CreateTagInput represents a mutation input for creating tags.
 type CreateTagInput struct {
-	Name *string
+	Name     *string
+	AssetIDs []uuid.UUID
 }
 
 // Mutate applies the CreateTagInput on the TagMutation builder.
 func (i *CreateTagInput) Mutate(m *TagMutation) {
 	if v := i.Name; v != nil {
 		m.SetName(*v)
+	}
+	if v := i.AssetIDs; len(v) > 0 {
+		m.AddAssetIDs(v...)
 	}
 }
 
@@ -100,8 +206,11 @@ func (c *TagCreate) SetInput(i CreateTagInput) *TagCreate {
 
 // UpdateTagInput represents a mutation input for updating tags.
 type UpdateTagInput struct {
-	ClearName bool
-	Name      *string
+	ClearName      bool
+	Name           *string
+	ClearAsset     bool
+	AddAssetIDs    []uuid.UUID
+	RemoveAssetIDs []uuid.UUID
 }
 
 // Mutate applies the UpdateTagInput on the TagMutation builder.
@@ -111,6 +220,15 @@ func (i *UpdateTagInput) Mutate(m *TagMutation) {
 	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
+	}
+	if i.ClearAsset {
+		m.ClearAsset()
+	}
+	if v := i.AddAssetIDs; len(v) > 0 {
+		m.AddAssetIDs(v...)
+	}
+	if v := i.RemoveAssetIDs; len(v) > 0 {
+		m.RemoveAssetIDs(v...)
 	}
 }
 

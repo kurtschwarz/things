@@ -7,7 +7,6 @@ package resolver
 import (
 	"context"
 	"things-api/ent"
-	"things-api/graph/generated"
 
 	"github.com/google/uuid"
 )
@@ -21,8 +20,3 @@ func (r *mutationResolver) CreateLocation(ctx context.Context, input ent.CreateL
 func (r *mutationResolver) UpdateLocation(ctx context.Context, id string, input ent.UpdateLocationInput) (*ent.Location, error) {
 	return r.client.Location.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
 }
-
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-type mutationResolver struct{ *Resolver }

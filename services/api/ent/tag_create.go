@@ -5,6 +5,8 @@ package ent
 import (
 	"context"
 	"fmt"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/tag"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -45,6 +47,36 @@ func (tc *TagCreate) SetNillableID(u *uuid.UUID) *TagCreate {
 		tc.SetID(*u)
 	}
 	return tc
+}
+
+// AddAssetIDs adds the "asset" edge to the Asset entity by IDs.
+func (tc *TagCreate) AddAssetIDs(ids ...uuid.UUID) *TagCreate {
+	tc.mutation.AddAssetIDs(ids...)
+	return tc
+}
+
+// AddAsset adds the "asset" edges to the Asset entity.
+func (tc *TagCreate) AddAsset(a ...*Asset) *TagCreate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tc.AddAssetIDs(ids...)
+}
+
+// AddAssetTagIDs adds the "asset_tag" edge to the AssetTag entity by IDs.
+func (tc *TagCreate) AddAssetTagIDs(ids ...uuid.UUID) *TagCreate {
+	tc.mutation.AddAssetTagIDs(ids...)
+	return tc
+}
+
+// AddAssetTag adds the "asset_tag" edges to the AssetTag entity.
+func (tc *TagCreate) AddAssetTag(a ...*AssetTag) *TagCreate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return tc.AddAssetTagIDs(ids...)
 }
 
 // Mutation returns the TagMutation object of the builder.
@@ -128,6 +160,45 @@ func (tc *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(tag.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if nodes := tc.mutation.AssetIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.AssetTable,
+			Columns: tag.AssetPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AssetTagCreate{config: tc.config, mutation: newAssetTagMutation(tc.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		if specE.ID.Value != nil {
+			edge.Target.Fields = append(edge.Target.Fields, specE.ID)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.AssetTagIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   tag.AssetTagTable,
+			Columns: []string{tag.AssetTagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(assettag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

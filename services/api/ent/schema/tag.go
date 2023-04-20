@@ -4,6 +4,7 @@ import (
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -23,7 +24,9 @@ func (Tag) Fields() []ent.Field {
 }
 
 func (Tag) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("asset", Asset.Type).Ref("tags").Through("asset_tag", AssetTag.Type),
+	}
 }
 
 func (Tag) Annotations() []schema.Annotation {

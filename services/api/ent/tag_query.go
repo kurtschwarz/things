@@ -4,8 +4,11 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/predicate"
 	"things-api/ent/tag"
 
@@ -18,12 +21,16 @@ import (
 // TagQuery is the builder for querying Tag entities.
 type TagQuery struct {
 	config
-	ctx        *QueryContext
-	order      []tag.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Tag
-	modifiers  []func(*sql.Selector)
-	loadTotal  []func(context.Context, []*Tag) error
+	ctx               *QueryContext
+	order             []tag.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Tag
+	withAsset         *AssetQuery
+	withAssetTag      *AssetTagQuery
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*Tag) error
+	withNamedAsset    map[string]*AssetQuery
+	withNamedAssetTag map[string]*AssetTagQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +65,50 @@ func (tq *TagQuery) Unique(unique bool) *TagQuery {
 func (tq *TagQuery) Order(o ...tag.OrderOption) *TagQuery {
 	tq.order = append(tq.order, o...)
 	return tq
+}
+
+// QueryAsset chains the current query on the "asset" edge.
+func (tq *TagQuery) QueryAsset() *AssetQuery {
+	query := (&AssetClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, selector),
+			sqlgraph.To(asset.Table, asset.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, tag.AssetTable, tag.AssetPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAssetTag chains the current query on the "asset_tag" edge.
+func (tq *TagQuery) QueryAssetTag() *AssetTagQuery {
+	query := (&AssetTagClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, selector),
+			sqlgraph.To(assettag.Table, assettag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, tag.AssetTagTable, tag.AssetTagColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Tag entity from the query.
@@ -247,15 +298,39 @@ func (tq *TagQuery) Clone() *TagQuery {
 		return nil
 	}
 	return &TagQuery{
-		config:     tq.config,
-		ctx:        tq.ctx.Clone(),
-		order:      append([]tag.OrderOption{}, tq.order...),
-		inters:     append([]Interceptor{}, tq.inters...),
-		predicates: append([]predicate.Tag{}, tq.predicates...),
+		config:       tq.config,
+		ctx:          tq.ctx.Clone(),
+		order:        append([]tag.OrderOption{}, tq.order...),
+		inters:       append([]Interceptor{}, tq.inters...),
+		predicates:   append([]predicate.Tag{}, tq.predicates...),
+		withAsset:    tq.withAsset.Clone(),
+		withAssetTag: tq.withAssetTag.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
 	}
+}
+
+// WithAsset tells the query-builder to eager-load the nodes that are connected to
+// the "asset" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TagQuery) WithAsset(opts ...func(*AssetQuery)) *TagQuery {
+	query := (&AssetClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withAsset = query
+	return tq
+}
+
+// WithAssetTag tells the query-builder to eager-load the nodes that are connected to
+// the "asset_tag" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TagQuery) WithAssetTag(opts ...func(*AssetTagQuery)) *TagQuery {
+	query := (&AssetTagClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withAssetTag = query
+	return tq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -334,8 +409,12 @@ func (tq *TagQuery) prepareQuery(ctx context.Context) error {
 
 func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, error) {
 	var (
-		nodes = []*Tag{}
-		_spec = tq.querySpec()
+		nodes       = []*Tag{}
+		_spec       = tq.querySpec()
+		loadedTypes = [2]bool{
+			tq.withAsset != nil,
+			tq.withAssetTag != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Tag).scanValues(nil, columns)
@@ -343,6 +422,7 @@ func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, err
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Tag{config: tq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(tq.modifiers) > 0 {
@@ -357,12 +437,129 @@ func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, err
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := tq.withAsset; query != nil {
+		if err := tq.loadAsset(ctx, query, nodes,
+			func(n *Tag) { n.Edges.Asset = []*Asset{} },
+			func(n *Tag, e *Asset) { n.Edges.Asset = append(n.Edges.Asset, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withAssetTag; query != nil {
+		if err := tq.loadAssetTag(ctx, query, nodes,
+			func(n *Tag) { n.Edges.AssetTag = []*AssetTag{} },
+			func(n *Tag, e *AssetTag) { n.Edges.AssetTag = append(n.Edges.AssetTag, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range tq.withNamedAsset {
+		if err := tq.loadAsset(ctx, query, nodes,
+			func(n *Tag) { n.appendNamedAsset(name) },
+			func(n *Tag, e *Asset) { n.appendNamedAsset(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range tq.withNamedAssetTag {
+		if err := tq.loadAssetTag(ctx, query, nodes,
+			func(n *Tag) { n.appendNamedAssetTag(name) },
+			func(n *Tag, e *AssetTag) { n.appendNamedAssetTag(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for i := range tq.loadTotal {
 		if err := tq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
+}
+
+func (tq *TagQuery) loadAsset(ctx context.Context, query *AssetQuery, nodes []*Tag, init func(*Tag), assign func(*Tag, *Asset)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*Tag)
+	nids := make(map[uuid.UUID]map[*Tag]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(tag.AssetTable)
+		s.Join(joinT).On(s.C(asset.FieldID), joinT.C(tag.AssetPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(tag.AssetPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(tag.AssetPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Tag]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Asset](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "asset" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (tq *TagQuery) loadAssetTag(ctx context.Context, query *AssetTagQuery, nodes []*Tag, init func(*Tag), assign func(*Tag, *AssetTag)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Tag)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.Where(predicate.AssetTag(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(tag.AssetTagColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TagID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "tag_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (tq *TagQuery) sqlCount(ctx context.Context) (int, error) {
@@ -447,6 +644,34 @@ func (tq *TagQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedAsset tells the query-builder to eager-load the nodes that are connected to the "asset"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (tq *TagQuery) WithNamedAsset(name string, opts ...func(*AssetQuery)) *TagQuery {
+	query := (&AssetClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if tq.withNamedAsset == nil {
+		tq.withNamedAsset = make(map[string]*AssetQuery)
+	}
+	tq.withNamedAsset[name] = query
+	return tq
+}
+
+// WithNamedAssetTag tells the query-builder to eager-load the nodes that are connected to the "asset_tag"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (tq *TagQuery) WithNamedAssetTag(name string, opts ...func(*AssetTagQuery)) *TagQuery {
+	query := (&AssetTagClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if tq.withNamedAssetTag == nil {
+		tq.withNamedAssetTag = make(map[string]*AssetTagQuery)
+	}
+	tq.withNamedAssetTag[name] = query
+	return tq
 }
 
 // TagGroupBy is the group-by builder for Tag entities.

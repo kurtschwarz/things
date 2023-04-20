@@ -5,6 +5,8 @@ package ent
 import (
 	"context"
 	"fmt"
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
 	"things-api/ent/location"
 	"things-api/ent/tag"
 	"things-api/ent/user"
@@ -19,6 +21,12 @@ import (
 type Noder interface {
 	IsNode()
 }
+
+// IsNode implements the Node interface check for GQLGen.
+func (n *Asset) IsNode() {}
+
+// IsNode implements the Node interface check for GQLGen.
+func (n *AssetTag) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *Location) IsNode() {}
@@ -87,6 +95,30 @@ func (c *Client) Noder(ctx context.Context, id uuid.UUID, opts ...NodeOption) (_
 
 func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, error) {
 	switch table {
+	case asset.Table:
+		query := c.Asset.Query().
+			Where(asset.ID(id))
+		query, err := query.CollectFields(ctx, "Asset")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case assettag.Table:
+		query := c.AssetTag.Query().
+			Where(assettag.ID(id))
+		query, err := query.CollectFields(ctx, "AssetTag")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case location.Table:
 		query := c.Location.Query().
 			Where(location.ID(id))
@@ -196,6 +228,38 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		idmap[id] = append(idmap[id], &noders[i])
 	}
 	switch table {
+	case asset.Table:
+		query := c.Asset.Query().
+			Where(asset.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Asset")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case assettag.Table:
+		query := c.AssetTag.Query().
+			Where(assettag.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "AssetTag")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case location.Table:
 		query := c.Location.Query().
 			Where(location.IDIn(ids...))
