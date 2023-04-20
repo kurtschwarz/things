@@ -1,0 +1,4 @@
+.env
+
+services/api/tmp/
+services/api/things.db

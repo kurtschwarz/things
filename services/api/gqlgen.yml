@@ -1,0 +1,23 @@
+schema:
+  - graph/**/*.graphqls
+
+exec:
+  filename: graph/generated/generated.go
+  package: generated
+
+resolver:
+  layout: follow-schema
+  dir: pkg/resolver
+  package: resolver
+  filename_template: "{name}.go"
+
+autobind:
+  - things-api/ent
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  Node:
+    model:
+      - things-api/ent.Noder
