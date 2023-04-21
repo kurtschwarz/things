@@ -8,7 +8,6 @@ RUN go mod download
 
 COPY ./services/api/ /things/services/api/
 
-
 ENTRYPOINT [ "air" ]
 CMD [ "" ]
 

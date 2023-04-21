@@ -1,6 +1,23 @@
 version: '3'
 
 services:
+  app:
+    build:
+      target: dev
+      context: ./
+      dockerfile: ./services/app/Dockerfile
+    image: things/app:latest
+    volumes:
+      - ./services/app/:/things/services/app/
+    ports:
+      - 127.0.0.1:3000:3000/tcp
+    networks:
+      things:
+        aliases:
+          - app.things.service.docker
+    env_file: ./.env
+    container_name: app
+
   api:
     build:
       target: dev

@@ -1,4 +1,6 @@
 .env
 
+node_modules/
+
 services/api/tmp/
 services/api/things.db
