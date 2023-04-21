@@ -14,5 +14,8 @@ export default defineConfig({
     alias: [
       { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
     ]
+  },
+  define: {
+    APP_VERSION: JSON.stringify('0.0.0-alpha')
   }
 })

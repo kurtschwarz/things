@@ -1,10 +1,10 @@
+import { Title } from '@mantine/core'
 import { createBrowserRouter } from 'react-router-dom'
 
+import { locationsDashboardLoader, LocationsDashboard } from '@/modules/locations'
+
 import RootScreen, { rootLoader } from './RootScreen/RootScreen'
-import DashboardScreen, { dashboardLoader } from './DashboardScreen/DashboardScreen'
-import LoginScreen, { loginLoader } from './LoginScreen/LoginScreen'
 import { ProtectedLayout } from '../components/Layout/ProtectedLayout'
-import LocationsScreen, { locationsLoader } from './LocationsScreen/LocationsScreen'
 
 export const screens = createBrowserRouter([
   {
@@ -14,31 +14,31 @@ export const screens = createBrowserRouter([
     children: [
       {
         path: '/login',
-        loader: loginLoader,
-        element: <LoginScreen />
+        loader: async () => ({}),
+        element: <Title order={2}>Login</Title>
       },
       {
         element: <ProtectedLayout />,
         children: [
           {
             path: '/',
-            loader: dashboardLoader,
-            element: <DashboardScreen />
+            loader: async () => ({}),
+            element: <Title order={2}>Dashboard</Title>
           },
           {
             path: '/locations',
-            loader: locationsLoader,
-            element: <LocationsScreen />
+            loader: locationsDashboardLoader,
+            element: <LocationsDashboard />
           },
           {
             path: '/tags',
             loader: async () => ({}),
-            element: <div>Tags Screen</div>
+            element: <Title order={2}>Tags</Title>
           },
           {
             path: '/settings',
             loader: async () => ({}),
-            element: <div>Settings Screen</div>
+            element: <Title order={2}>Settings</Title>
           }
         ]
       }

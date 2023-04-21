@@ -1,4 +1,4 @@
-import { createStyles, rem, getStylesRef, Navbar, Group, Code, Text, Button } from '@mantine/core'
+import { createStyles, rem, getStylesRef, Navbar, Group, Code, Text } from '@mantine/core'
 import { BiArchive, BiMap, BiRocket, BiCog, BiLabel } from 'react-icons/bi'
 import { useLocation } from 'react-router'
 import { Link } from 'react-router-dom'
@@ -106,7 +106,7 @@ export const Sidebar = () => {
             Things
           </Text>
 
-          <Code sx={{ fontWeight: 700 }}>v0.0.1</Code>
+          <Code sx={{ fontWeight: 700 }}>v{APP_VERSION}</Code>
         </Group>
       </Navbar.Section>
 

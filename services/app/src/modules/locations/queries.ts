@@ -5,6 +5,7 @@ export const GET_LOCATIONS = gql`
     locations {
       edges {
         node {
+          id
           name
         }
       }
