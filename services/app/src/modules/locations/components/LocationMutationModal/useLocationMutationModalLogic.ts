@@ -3,7 +3,6 @@ import type { ContextModalProps } from '@mantine/modals/lib/context'
 
 import { Location } from '@/graphql/types'
 import { useLocationMutations } from '@/modules/locations'
-import { GET_LOCATIONS } from '../../queries'
 
 export const useLocationMutationModalLogic = (
   modal: ContextModalProps,
@@ -14,6 +13,7 @@ export const useLocationMutationModalLogic = (
     initialValues: {
       name: location?.name ?? '',
       description: location?.description ?? '',
+      parentID: location?.parentID ?? '',
     }
   })
 
@@ -39,20 +39,17 @@ export const useLocationMutationModalLogic = (
     }, 200)
   }
 
-  const handleSave = async (values: Pick<Location, 'name' | 'description'>) => {
+  const handleSave = async (values: Pick<Location, 'name' | 'description' | 'parentID'>) => {
     if (location?.id) {
       await updateLocationMutation({
         variables: {
           id: location.id,
           input: {
             name: values.name,
+            parentID: values.parentID,
             // description: values.description
           }
         },
-        // refetchQueries: [
-        //   { query: GET_LOCATIONS }
-        // ],
-        // awaitRefetchQueries: true,
         onCompleted: handleMutationCompleted
       })
 
@@ -63,13 +60,10 @@ export const useLocationMutationModalLogic = (
       variables: {
         input: {
           name: values.name,
+          parentID: values.parentID,
           // description: values.description
         }
       },
-      // refetchQueries: [
-      //   { query: GET_LOCATIONS }
-      // ],
-      // awaitRefetchQueries: true,
       onCompleted: handleMutationCompleted
     })
   }

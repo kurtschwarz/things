@@ -41,7 +41,7 @@ func main() {
 	)
 
 	srv := handler.NewDefaultServer(resolver.NewSchema(client))
-	router.Handle("/", playground.Handler("Things", "/query"))
+	router.Handle("/", playground.Handler("Things", "/graphql"))
 	router.Handle("/graphql", srv)
 
 	if err = http.ListenAndServe(":8081", router); err != nil {

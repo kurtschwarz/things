@@ -4,13 +4,12 @@ import { useLoaderData, useRevalidator } from 'react-router'
 import { client } from '@/graphql/client'
 import { Location } from '@/graphql/types'
 
-import { GET_LOCATIONS } from '../queries'
+import { GET_ALL_LOCATIONS } from '../queries'
 import { openCreateLocationMutationModal, openUpdateLocationMutationModal } from '../helpers'
-
 
 export const locationsDashboardLoader = async () =>
   client.query({
-    query: GET_LOCATIONS
+    query: GET_ALL_LOCATIONS
   })
 
 export const LocationsDashboard = () => {

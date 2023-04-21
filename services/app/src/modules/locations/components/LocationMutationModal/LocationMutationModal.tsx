@@ -4,6 +4,7 @@ import { ContextModalProps } from '@mantine/modals'
 import type { Location } from '@/graphql/types'
 
 import { useLocationMutationModalLogic } from './useLocationMutationModalLogic'
+import { LocationSelect } from '../LocationSelect/LocationSelect'
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -47,11 +48,18 @@ export const LocationMutationModal = ({ context, id, innerProps }: ContextModalP
       <Textarea
         label='Description'
         placeholder='Add an optional description'
-        minRows={3}
-        mt='md'
         classNames={classes}
+        minRows={3}
+        mt='sm'
         autosize
         {...form.getInputProps('description')}
+      />
+
+      <LocationSelect
+        label='Parent Location'
+        classNames={classes}
+        mt='sm'
+        {...form.getInputProps('parentID')}
       />
 
       <Group position='right' mt='md'>
