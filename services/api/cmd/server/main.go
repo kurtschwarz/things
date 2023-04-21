@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/dialect"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
+	"github.com/rs/cors"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -22,21 +24,27 @@ func main() {
 		log.Fatal("opening ent client", err)
 	}
 
-	if err := client.Schema.Create(
+	if err = client.Schema.Create(
 		context.Background(),
 		migrate.WithGlobalUniqueID(true),
 	); err != nil {
 		log.Fatal("opening ent client", err)
 	}
 
-	// Configure the server and start listening on :8081.
-	srv := handler.NewDefaultServer(resolver.NewSchema(client))
-	http.Handle("/",
-		playground.Handler("User", "/query"),
+	router := chi.NewRouter()
+	router.Use(
+		cors.New(cors.Options{
+			AllowedOrigins:   []string{"*"},
+			AllowCredentials: true,
+			Debug:            true,
+		}).Handler,
 	)
-	http.Handle("/query", srv)
-	log.Println("listening on :8081")
-	if err := http.ListenAndServe(":8081", nil); err != nil {
-		log.Fatal("http server terminated", err)
+
+	srv := handler.NewDefaultServer(resolver.NewSchema(client))
+	router.Handle("/", playground.Handler("Things", "/query"))
+	router.Handle("/graphql", srv)
+
+	if err = http.ListenAndServe(":8081", router); err != nil {
+		panic(err)
 	}
 }
