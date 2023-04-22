@@ -2,7 +2,7 @@ import { useForm } from '@mantine/form'
 import type { ContextModalProps } from '@mantine/modals/lib/context'
 
 import { Location } from '@/graphql/types'
-import { useLocationMutations } from '@/modules/locations'
+import { GET_ALL_LOCATIONS, useLocationMutations } from '@/modules/locations'
 
 export const useLocationMutationModalLogic = (
   modal: ContextModalProps,
@@ -33,7 +33,6 @@ export const useLocationMutationModalLogic = (
 
   const handleMutationCompleted = () => {
     onCompleted?.()
-
     setTimeout(() => {
       modal.context.closeContextModal(modal.id, false)
     }, 200)
@@ -50,6 +49,10 @@ export const useLocationMutationModalLogic = (
             // description: values.description
           }
         },
+        refetchQueries: [
+          { query: GET_ALL_LOCATIONS }
+        ],
+        awaitRefetchQueries: true,
         onCompleted: handleMutationCompleted
       })
 
@@ -64,6 +67,10 @@ export const useLocationMutationModalLogic = (
           // description: values.description
         }
       },
+      refetchQueries: [
+        { query: GET_ALL_LOCATIONS }
+      ],
+      awaitRefetchQueries: true,
       onCompleted: handleMutationCompleted
     })
   }

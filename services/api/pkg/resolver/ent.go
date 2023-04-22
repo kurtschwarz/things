@@ -241,8 +241,17 @@ func (r *createAssetInputResolver) TagIDs(ctx context.Context, obj *ent.CreateAs
 }
 
 // ParentID is the resolver for the parentID field.
-func (r *createLocationInputResolver) ParentID(ctx context.Context, obj *ent.CreateLocationInput, data *string) error {
-	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+func (r *createLocationInputResolver) ParentID(ctx context.Context, obj *ent.CreateLocationInput, data *string) (err error) {
+	if data != nil {
+		var uid uuid.UUID
+		if uid, err = uuid.Parse(*data); err != nil {
+			return err
+		}
+
+		obj.ParentID = &uid
+	}
+
+	return nil
 }
 
 // ChildIDs is the resolver for the childIDs field.
@@ -396,8 +405,17 @@ func (r *updateAssetInputResolver) RemoveTagIDs(ctx context.Context, obj *ent.Up
 }
 
 // ParentID is the resolver for the parentID field.
-func (r *updateLocationInputResolver) ParentID(ctx context.Context, obj *ent.UpdateLocationInput, data *string) error {
-	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+func (r *updateLocationInputResolver) ParentID(ctx context.Context, obj *ent.UpdateLocationInput, data *string) (err error) {
+	if data != nil {
+		var uid uuid.UUID
+		if uid, err = uuid.Parse(*data); err != nil {
+			return err
+		}
+
+		obj.ParentID = &uid
+	}
+
+	return nil
 }
 
 // AddChildIDs is the resolver for the addChildIDs field.
