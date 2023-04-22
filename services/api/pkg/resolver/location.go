@@ -7,6 +7,7 @@ package resolver
 import (
 	"context"
 	"things-api/ent"
+	"things-api/ent/location"
 
 	"github.com/google/uuid"
 )
@@ -19,4 +20,43 @@ func (r *mutationResolver) CreateLocation(ctx context.Context, input ent.CreateL
 // UpdateLocation is the resolver for the updateLocation field.
 func (r *mutationResolver) UpdateLocation(ctx context.Context, id string, input ent.UpdateLocationInput) (*ent.Location, error) {
 	return r.client.Location.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
+}
+
+// DeleteLocation is the resolver for the deleteLocation field.
+func (r *mutationResolver) DeleteLocation(ctx context.Context, id string) (bool, error) {
+	var findAllLocationsIDsToDelete func(locationID uuid.UUID, locationIDs []uuid.UUID) ([]uuid.UUID, error)
+	findAllLocationsIDsToDelete = func(locationID uuid.UUID, locationIDs []uuid.UUID) ([]uuid.UUID, error) {
+		locationIDs = append(locationIDs, locationID)
+		location, err := r.client.Location.Query().
+			Where(location.ID(locationID)).
+			WithChildren(func(q *ent.LocationQuery) {
+				q.WithChildren()
+			}).
+			Only(ctx)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, child := range location.Edges.Children {
+			locationIDs = append(locationIDs, child.ID)
+			if child.Edges.Children != nil && len(child.Edges.Children) > 0 {
+				return findAllLocationsIDsToDelete(child.ID, locationIDs)
+			}
+		}
+
+		return locationIDs, nil
+	}
+
+	locationIDs, err := findAllLocationsIDsToDelete(uuid.MustParse(id), []uuid.UUID{})
+	if err != nil {
+		return false, err
+	}
+
+	_, err = r.client.Location.Delete().Where(location.IDIn(locationIDs...)).Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
