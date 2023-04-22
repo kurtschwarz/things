@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"things-api/ent/schema/mixin"
+
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
@@ -35,5 +37,11 @@ func (Location) Annotations() []schema.Annotation {
 			entgql.MutationCreate(),
 			entgql.MutationUpdate(),
 		),
+	}
+}
+
+func (Location) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		mixin.SoftDeleteMixin{},
 	}
 }

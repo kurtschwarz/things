@@ -76,6 +76,7 @@ var (
 	// LocationsColumns holds the columns for the "locations" table.
 	LocationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 	}
@@ -87,7 +88,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "locations_locations_children",
-				Columns:    []*schema.Column{LocationsColumns[2]},
+				Columns:    []*schema.Column{LocationsColumns[3]},
 				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

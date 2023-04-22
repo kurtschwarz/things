@@ -2,7 +2,57 @@
 
 package runtime
 
-// The schema-stitching logic is generated in things-api/ent/runtime.go
+import (
+	"things-api/ent/asset"
+	"things-api/ent/assettag"
+	"things-api/ent/location"
+	"things-api/ent/schema"
+	"things-api/ent/tag"
+	"things-api/ent/user"
+
+	"github.com/google/uuid"
+)
+
+// The init function reads all schema descriptors with runtime code
+// (default values, validators, hooks and policies) and stitches it
+// to their package variables.
+func init() {
+	assetFields := schema.Asset{}.Fields()
+	_ = assetFields
+	// assetDescID is the schema descriptor for id field.
+	assetDescID := assetFields[0].Descriptor()
+	// asset.DefaultID holds the default value on creation for the id field.
+	asset.DefaultID = assetDescID.Default.(func() uuid.UUID)
+	assettagFields := schema.AssetTag{}.Fields()
+	_ = assettagFields
+	// assettagDescID is the schema descriptor for id field.
+	assettagDescID := assettagFields[0].Descriptor()
+	// assettag.DefaultID holds the default value on creation for the id field.
+	assettag.DefaultID = assettagDescID.Default.(func() uuid.UUID)
+	locationMixin := schema.Location{}.Mixin()
+	locationMixinHooks0 := locationMixin[0].Hooks()
+	location.Hooks[0] = locationMixinHooks0[0]
+	locationMixinInters0 := locationMixin[0].Interceptors()
+	location.Interceptors[0] = locationMixinInters0[0]
+	locationFields := schema.Location{}.Fields()
+	_ = locationFields
+	// locationDescID is the schema descriptor for id field.
+	locationDescID := locationFields[0].Descriptor()
+	// location.DefaultID holds the default value on creation for the id field.
+	location.DefaultID = locationDescID.Default.(func() uuid.UUID)
+	tagFields := schema.Tag{}.Fields()
+	_ = tagFields
+	// tagDescID is the schema descriptor for id field.
+	tagDescID := tagFields[0].Descriptor()
+	// tag.DefaultID holds the default value on creation for the id field.
+	tag.DefaultID = tagDescID.Default.(func() uuid.UUID)
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescID is the schema descriptor for id field.
+	userDescID := userFields[0].Descriptor()
+	// user.DefaultID holds the default value on creation for the id field.
+	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+}
 
 const (
 	Version = "v0.12.1"                                         // Version of ent codegen.

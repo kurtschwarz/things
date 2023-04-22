@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"things-api/ent/location"
 	"things-api/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -25,6 +26,26 @@ type LocationUpdate struct {
 // Where appends a list predicates to the LocationUpdate builder.
 func (lu *LocationUpdate) Where(ps ...predicate.Location) *LocationUpdate {
 	lu.mutation.Where(ps...)
+	return lu
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (lu *LocationUpdate) SetDeletedAt(t time.Time) *LocationUpdate {
+	lu.mutation.SetDeletedAt(t)
+	return lu
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (lu *LocationUpdate) SetNillableDeletedAt(t *time.Time) *LocationUpdate {
+	if t != nil {
+		lu.SetDeletedAt(*t)
+	}
+	return lu
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (lu *LocationUpdate) ClearDeletedAt() *LocationUpdate {
+	lu.mutation.ClearDeletedAt()
 	return lu
 }
 
@@ -156,6 +177,12 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := lu.mutation.DeletedAt(); ok {
+		_spec.SetField(location.FieldDeletedAt, field.TypeTime, value)
+	}
+	if lu.mutation.DeletedAtCleared() {
+		_spec.ClearField(location.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := lu.mutation.Name(); ok {
 		_spec.SetField(location.FieldName, field.TypeString, value)
 	}
@@ -254,6 +281,26 @@ type LocationUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *LocationMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (luo *LocationUpdateOne) SetDeletedAt(t time.Time) *LocationUpdateOne {
+	luo.mutation.SetDeletedAt(t)
+	return luo
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (luo *LocationUpdateOne) SetNillableDeletedAt(t *time.Time) *LocationUpdateOne {
+	if t != nil {
+		luo.SetDeletedAt(*t)
+	}
+	return luo
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (luo *LocationUpdateOne) ClearDeletedAt() *LocationUpdateOne {
+	luo.mutation.ClearDeletedAt()
+	return luo
 }
 
 // SetParentID sets the "parent_id" field.
@@ -413,6 +460,12 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := luo.mutation.DeletedAt(); ok {
+		_spec.SetField(location.FieldDeletedAt, field.TypeTime, value)
+	}
+	if luo.mutation.DeletedAtCleared() {
+		_spec.ClearField(location.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := luo.mutation.Name(); ok {
 		_spec.SetField(location.FieldName, field.TypeString, value)

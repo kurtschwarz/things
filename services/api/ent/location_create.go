@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"things-api/ent/location"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -17,6 +18,20 @@ type LocationCreate struct {
 	config
 	mutation *LocationMutation
 	hooks    []Hook
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (lc *LocationCreate) SetDeletedAt(t time.Time) *LocationCreate {
+	lc.mutation.SetDeletedAt(t)
+	return lc
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (lc *LocationCreate) SetNillableDeletedAt(t *time.Time) *LocationCreate {
+	if t != nil {
+		lc.SetDeletedAt(*t)
+	}
+	return lc
 }
 
 // SetParentID sets the "parent_id" field.
@@ -88,7 +103,9 @@ func (lc *LocationCreate) Mutation() *LocationMutation {
 
 // Save creates the Location in the database.
 func (lc *LocationCreate) Save(ctx context.Context) (*Location, error) {
-	lc.defaults()
+	if err := lc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks[*Location, LocationMutation](ctx, lc.sqlSave, lc.mutation, lc.hooks)
 }
 
@@ -115,11 +132,15 @@ func (lc *LocationCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (lc *LocationCreate) defaults() {
+func (lc *LocationCreate) defaults() error {
 	if _, ok := lc.mutation.ID(); !ok {
+		if location.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized location.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := location.DefaultID()
 		lc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -158,6 +179,10 @@ func (lc *LocationCreate) createSpec() (*Location, *sqlgraph.CreateSpec) {
 	if id, ok := lc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := lc.mutation.DeletedAt(); ok {
+		_spec.SetField(location.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = value
 	}
 	if value, ok := lc.mutation.Name(); ok {
 		_spec.SetField(location.FieldName, field.TypeString, value)

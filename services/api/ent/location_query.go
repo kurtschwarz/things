@@ -336,12 +336,12 @@ func (lq *LocationQuery) WithChildren(opts ...func(*LocationQuery)) *LocationQue
 // Example:
 //
 //	var v []struct {
-//		ParentID uuid.UUID `json:"parent_id,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Location.Query().
-//		GroupBy(location.FieldParentID).
+//		GroupBy(location.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (lq *LocationQuery) GroupBy(field string, fields ...string) *LocationGroupBy {
@@ -359,11 +359,11 @@ func (lq *LocationQuery) GroupBy(field string, fields ...string) *LocationGroupB
 // Example:
 //
 //	var v []struct {
-//		ParentID uuid.UUID `json:"parent_id,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.Location.Query().
-//		Select(location.FieldParentID).
+//		Select(location.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (lq *LocationQuery) Select(fields ...string) *LocationSelect {
 	lq.ctx.Fields = append(lq.ctx.Fields, fields...)

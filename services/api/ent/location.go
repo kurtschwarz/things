@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"things-api/ent/location"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -17,6 +18,8 @@ type Location struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// DeletedAt holds the value of the "deleted_at" field.
+	DeletedAt time.Time `json:"deleted_at,omitempty"`
 	// ParentID holds the value of the "parent_id" field.
 	ParentID uuid.UUID `json:"parent_id,omitempty"`
 	// Name holds the value of the "name" field.
@@ -71,6 +74,8 @@ func (*Location) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case location.FieldName:
 			values[i] = new(sql.NullString)
+		case location.FieldDeletedAt:
+			values[i] = new(sql.NullTime)
 		case location.FieldID, location.FieldParentID:
 			values[i] = new(uuid.UUID)
 		default:
@@ -93,6 +98,12 @@ func (l *Location) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				l.ID = *value
+			}
+		case location.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				l.DeletedAt = value.Time
 			}
 		case location.FieldParentID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -152,6 +163,9 @@ func (l *Location) String() string {
 	var builder strings.Builder
 	builder.WriteString("Location(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", l.ID))
+	builder.WriteString("deleted_at=")
+	builder.WriteString(l.DeletedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("parent_id=")
 	builder.WriteString(fmt.Sprintf("%v", l.ParentID))
 	builder.WriteString(", ")

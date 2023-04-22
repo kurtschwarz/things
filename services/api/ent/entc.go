@@ -27,6 +27,7 @@ func main() {
 		&gen.Config{},
 		[]entc.Option{
 			entc.Extensions(ex),
+			entc.FeatureNames("intercept"),
 		}...,
 	); err != nil {
 		log.Fatalf("running ent codegen: %v", err)

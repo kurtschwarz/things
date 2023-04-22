@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -110,13 +112,17 @@ func (c *AssetUpdateOne) SetInput(i UpdateAssetInput) *AssetUpdateOne {
 
 // CreateLocationInput represents a mutation input for creating locations.
 type CreateLocationInput struct {
-	Name     *string
-	ParentID *uuid.UUID
-	ChildIDs []uuid.UUID
+	DeletedAt *time.Time
+	Name      *string
+	ParentID  *uuid.UUID
+	ChildIDs  []uuid.UUID
 }
 
 // Mutate applies the CreateLocationInput on the LocationMutation builder.
 func (i *CreateLocationInput) Mutate(m *LocationMutation) {
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
@@ -136,6 +142,8 @@ func (c *LocationCreate) SetInput(i CreateLocationInput) *LocationCreate {
 
 // UpdateLocationInput represents a mutation input for updating locations.
 type UpdateLocationInput struct {
+	ClearDeletedAt bool
+	DeletedAt      *time.Time
 	ClearName      bool
 	Name           *string
 	ClearParent    bool
@@ -147,6 +155,12 @@ type UpdateLocationInput struct {
 
 // Mutate applies the UpdateLocationInput on the LocationMutation builder.
 func (i *UpdateLocationInput) Mutate(m *LocationMutation) {
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if i.ClearName {
 		m.ClearName()
 	}

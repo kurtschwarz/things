@@ -7,6 +7,7 @@ import (
 
 	"things-api/ent"
 	"things-api/ent/migrate"
+	_ "things-api/ent/runtime"
 	"things-api/pkg/resolver"
 
 	"entgo.io/ent/dialect"

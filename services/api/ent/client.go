@@ -705,12 +705,14 @@ func (c *LocationClient) QueryChildren(l *Location) *LocationQuery {
 
 // Hooks returns the client hooks.
 func (c *LocationClient) Hooks() []Hook {
-	return c.hooks.Location
+	hooks := c.hooks.Location
+	return append(hooks[:len(hooks):len(hooks)], location.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
 func (c *LocationClient) Interceptors() []Interceptor {
-	return c.inters.Location
+	inters := c.inters.Location
+	return append(inters[:len(inters):len(inters)], location.Interceptors[:]...)
 }
 
 func (c *LocationClient) mutate(ctx context.Context, m *LocationMutation) (Value, error) {

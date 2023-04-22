@@ -298,6 +298,11 @@ func (l *LocationQuery) collectField(ctx context.Context, opCtx *graphql.Operati
 			l.WithNamedChildren(alias, func(wq *LocationQuery) {
 				*wq = *query
 			})
+		case "deletedAt":
+			if _, ok := fieldSeen[location.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, location.FieldDeletedAt)
+				fieldSeen[location.FieldDeletedAt] = struct{}{}
+			}
 		case "parentID":
 			if _, ok := fieldSeen[location.FieldParentID]; !ok {
 				selectedFields = append(selectedFields, location.FieldParentID)
