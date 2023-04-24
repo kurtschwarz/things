@@ -89,6 +89,26 @@ func (lu *LocationUpdate) ClearName() *LocationUpdate {
 	return lu
 }
 
+// SetDescription sets the "description" field.
+func (lu *LocationUpdate) SetDescription(s string) *LocationUpdate {
+	lu.mutation.SetDescription(s)
+	return lu
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (lu *LocationUpdate) SetNillableDescription(s *string) *LocationUpdate {
+	if s != nil {
+		lu.SetDescription(*s)
+	}
+	return lu
+}
+
+// ClearDescription clears the value of the "description" field.
+func (lu *LocationUpdate) ClearDescription() *LocationUpdate {
+	lu.mutation.ClearDescription()
+	return lu
+}
+
 // SetParent sets the "parent" edge to the Location entity.
 func (lu *LocationUpdate) SetParent(l *Location) *LocationUpdate {
 	return lu.SetParentID(l.ID)
@@ -188,6 +208,12 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if lu.mutation.NameCleared() {
 		_spec.ClearField(location.FieldName, field.TypeString)
+	}
+	if value, ok := lu.mutation.Description(); ok {
+		_spec.SetField(location.FieldDescription, field.TypeString, value)
+	}
+	if lu.mutation.DescriptionCleared() {
+		_spec.ClearField(location.FieldDescription, field.TypeString)
 	}
 	if lu.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -343,6 +369,26 @@ func (luo *LocationUpdateOne) ClearName() *LocationUpdateOne {
 	return luo
 }
 
+// SetDescription sets the "description" field.
+func (luo *LocationUpdateOne) SetDescription(s string) *LocationUpdateOne {
+	luo.mutation.SetDescription(s)
+	return luo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (luo *LocationUpdateOne) SetNillableDescription(s *string) *LocationUpdateOne {
+	if s != nil {
+		luo.SetDescription(*s)
+	}
+	return luo
+}
+
+// ClearDescription clears the value of the "description" field.
+func (luo *LocationUpdateOne) ClearDescription() *LocationUpdateOne {
+	luo.mutation.ClearDescription()
+	return luo
+}
+
 // SetParent sets the "parent" edge to the Location entity.
 func (luo *LocationUpdateOne) SetParent(l *Location) *LocationUpdateOne {
 	return luo.SetParentID(l.ID)
@@ -472,6 +518,12 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 	}
 	if luo.mutation.NameCleared() {
 		_spec.ClearField(location.FieldName, field.TypeString)
+	}
+	if value, ok := luo.mutation.Description(); ok {
+		_spec.SetField(location.FieldDescription, field.TypeString, value)
+	}
+	if luo.mutation.DescriptionCleared() {
+		_spec.ClearField(location.FieldDescription, field.TypeString)
 	}
 	if luo.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{

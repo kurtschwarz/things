@@ -1377,6 +1377,7 @@ type LocationMutation struct {
 	id              *uuid.UUID
 	deleted_at      *time.Time
 	name            *string
+	description     *string
 	clearedFields   map[string]struct{}
 	parent          *uuid.UUID
 	clearedparent   bool
@@ -1639,6 +1640,55 @@ func (m *LocationMutation) ResetName() {
 	delete(m.clearedFields, location.FieldName)
 }
 
+// SetDescription sets the "description" field.
+func (m *LocationMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *LocationMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Location entity.
+// If the Location object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LocationMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *LocationMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[location.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *LocationMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[location.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *LocationMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, location.FieldDescription)
+}
+
 // ClearParent clears the "parent" edge to the Location entity.
 func (m *LocationMutation) ClearParent() {
 	m.clearedparent = true
@@ -1753,7 +1803,7 @@ func (m *LocationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LocationMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.deleted_at != nil {
 		fields = append(fields, location.FieldDeletedAt)
 	}
@@ -1762,6 +1812,9 @@ func (m *LocationMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, location.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, location.FieldDescription)
 	}
 	return fields
 }
@@ -1777,6 +1830,8 @@ func (m *LocationMutation) Field(name string) (ent.Value, bool) {
 		return m.ParentID()
 	case location.FieldName:
 		return m.Name()
+	case location.FieldDescription:
+		return m.Description()
 	}
 	return nil, false
 }
@@ -1792,6 +1847,8 @@ func (m *LocationMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldParentID(ctx)
 	case location.FieldName:
 		return m.OldName(ctx)
+	case location.FieldDescription:
+		return m.OldDescription(ctx)
 	}
 	return nil, fmt.Errorf("unknown Location field %s", name)
 }
@@ -1821,6 +1878,13 @@ func (m *LocationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case location.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Location field %s", name)
@@ -1861,6 +1925,9 @@ func (m *LocationMutation) ClearedFields() []string {
 	if m.FieldCleared(location.FieldName) {
 		fields = append(fields, location.FieldName)
 	}
+	if m.FieldCleared(location.FieldDescription) {
+		fields = append(fields, location.FieldDescription)
+	}
 	return fields
 }
 
@@ -1884,6 +1951,9 @@ func (m *LocationMutation) ClearField(name string) error {
 	case location.FieldName:
 		m.ClearName()
 		return nil
+	case location.FieldDescription:
+		m.ClearDescription()
+		return nil
 	}
 	return fmt.Errorf("unknown Location nullable field %s", name)
 }
@@ -1900,6 +1970,9 @@ func (m *LocationMutation) ResetField(name string) error {
 		return nil
 	case location.FieldName:
 		m.ResetName()
+		return nil
+	case location.FieldDescription:
+		m.ResetDescription()
 		return nil
 	}
 	return fmt.Errorf("unknown Location field %s", name)

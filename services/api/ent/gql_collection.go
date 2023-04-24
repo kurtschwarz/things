@@ -313,6 +313,11 @@ func (l *LocationQuery) collectField(ctx context.Context, opCtx *graphql.Operati
 				selectedFields = append(selectedFields, location.FieldName)
 				fieldSeen[location.FieldName] = struct{}{}
 			}
+		case "description":
+			if _, ok := fieldSeen[location.FieldDescription]; !ok {
+				selectedFields = append(selectedFields, location.FieldDescription)
+				fieldSeen[location.FieldDescription] = struct{}{}
+			}
 		default:
 			unknownSeen = true
 		}

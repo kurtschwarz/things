@@ -112,10 +112,11 @@ func (c *AssetUpdateOne) SetInput(i UpdateAssetInput) *AssetUpdateOne {
 
 // CreateLocationInput represents a mutation input for creating locations.
 type CreateLocationInput struct {
-	DeletedAt *time.Time
-	Name      *string
-	ParentID  *uuid.UUID
-	ChildIDs  []uuid.UUID
+	DeletedAt   *time.Time
+	Name        *string
+	Description *string
+	ParentID    *uuid.UUID
+	ChildIDs    []uuid.UUID
 }
 
 // Mutate applies the CreateLocationInput on the LocationMutation builder.
@@ -125,6 +126,9 @@ func (i *CreateLocationInput) Mutate(m *LocationMutation) {
 	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
+	}
+	if v := i.Description; v != nil {
+		m.SetDescription(*v)
 	}
 	if v := i.ParentID; v != nil {
 		m.SetParentID(*v)
@@ -142,15 +146,17 @@ func (c *LocationCreate) SetInput(i CreateLocationInput) *LocationCreate {
 
 // UpdateLocationInput represents a mutation input for updating locations.
 type UpdateLocationInput struct {
-	ClearDeletedAt bool
-	DeletedAt      *time.Time
-	ClearName      bool
-	Name           *string
-	ClearParent    bool
-	ParentID       *uuid.UUID
-	ClearChildren  bool
-	AddChildIDs    []uuid.UUID
-	RemoveChildIDs []uuid.UUID
+	ClearDeletedAt   bool
+	DeletedAt        *time.Time
+	ClearName        bool
+	Name             *string
+	ClearDescription bool
+	Description      *string
+	ClearParent      bool
+	ParentID         *uuid.UUID
+	ClearChildren    bool
+	AddChildIDs      []uuid.UUID
+	RemoveChildIDs   []uuid.UUID
 }
 
 // Mutate applies the UpdateLocationInput on the LocationMutation builder.
@@ -166,6 +172,12 @@ func (i *UpdateLocationInput) Mutate(m *LocationMutation) {
 	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
+	}
+	if i.ClearDescription {
+		m.ClearDescription()
+	}
+	if v := i.Description; v != nil {
+		m.SetDescription(*v)
 	}
 	if i.ClearParent {
 		m.ClearParent()

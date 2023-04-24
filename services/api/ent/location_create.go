@@ -62,6 +62,20 @@ func (lc *LocationCreate) SetNillableName(s *string) *LocationCreate {
 	return lc
 }
 
+// SetDescription sets the "description" field.
+func (lc *LocationCreate) SetDescription(s string) *LocationCreate {
+	lc.mutation.SetDescription(s)
+	return lc
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (lc *LocationCreate) SetNillableDescription(s *string) *LocationCreate {
+	if s != nil {
+		lc.SetDescription(*s)
+	}
+	return lc
+}
+
 // SetID sets the "id" field.
 func (lc *LocationCreate) SetID(u uuid.UUID) *LocationCreate {
 	lc.mutation.SetID(u)
@@ -187,6 +201,10 @@ func (lc *LocationCreate) createSpec() (*Location, *sqlgraph.CreateSpec) {
 	if value, ok := lc.mutation.Name(); ok {
 		_spec.SetField(location.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := lc.mutation.Description(); ok {
+		_spec.SetField(location.FieldDescription, field.TypeString, value)
+		_node.Description = value
 	}
 	if nodes := lc.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

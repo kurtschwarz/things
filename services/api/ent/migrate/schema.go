@@ -78,6 +78,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// LocationsTable holds the schema information for the "locations" table.
@@ -88,7 +89,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "locations_locations_children",
-				Columns:    []*schema.Column{LocationsColumns[3]},
+				Columns:    []*schema.Column{LocationsColumns[4]},
 				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

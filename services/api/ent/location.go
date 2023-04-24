@@ -24,6 +24,8 @@ type Location struct {
 	ParentID *uuid.UUID `json:"parent_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LocationQuery when eager-loading is set.
 	Edges        LocationEdges `json:"edges"`
@@ -74,7 +76,7 @@ func (*Location) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case location.FieldParentID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case location.FieldName:
+		case location.FieldName, location.FieldDescription:
 			values[i] = new(sql.NullString)
 		case location.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
@@ -119,6 +121,12 @@ func (l *Location) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				l.Name = value.String
+			}
+		case location.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				l.Description = value.String
 			}
 		default:
 			l.selectValues.Set(columns[i], values[i])
@@ -176,6 +184,9 @@ func (l *Location) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(l.Name)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(l.Description)
 	builder.WriteByte(')')
 	return builder.String()
 }
