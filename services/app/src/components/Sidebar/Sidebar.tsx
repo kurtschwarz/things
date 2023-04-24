@@ -68,7 +68,8 @@ const navItems = [
   {
     icon: BiMap,
     label: 'Locations',
-    link: '/locations'
+    link: '/locations',
+    active: (url: string) => url.startsWith('/location')
   },
   {
     icon: BiLabel,
@@ -90,7 +91,7 @@ export const Sidebar = () => {
     <Link
       key={navItem.label}
       to={navItem.link}
-      className={cx(classes.link, { [classes.linkActive]: navItem.link === location.pathname })}
+      className={cx(classes.link, { [classes.linkActive]: navItem.active ? navItem.active(location.pathname) : navItem.link === location.pathname })}
     >
       {navItem.icon && <navItem.icon className={classes.linkIcon} />}
       <span>{navItem.label}</span>

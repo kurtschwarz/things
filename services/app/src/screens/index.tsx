@@ -1,7 +1,7 @@
 import { Title } from '@mantine/core'
 import { createBrowserRouter } from 'react-router-dom'
 
-import { locationsDashboardLoader, LocationsDashboard } from '@/modules/locations'
+import { locationsDashboardLoader, LocationsDashboard, locationDetailLoader, LocationDetail } from '@/modules/locations'
 
 import RootScreen, { rootLoader } from './RootScreen/RootScreen'
 import { ProtectedLayout } from '../components/Layout/ProtectedLayout'
@@ -29,6 +29,11 @@ export const screens = createBrowserRouter([
             path: '/locations',
             loader: locationsDashboardLoader,
             element: <LocationsDashboard />
+          },
+          {
+            path: '/location/:id',
+            loader: locationDetailLoader,
+            element: <LocationDetail />
           },
           {
             path: '/tags',

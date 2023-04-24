@@ -1,4 +1,5 @@
-import { createStyles, rem, Card, Image, Text } from '@mantine/core'
+import { Card, Image, Text, createStyles } from '@mantine/core'
+import { useNavigate } from 'react-router-dom'
 
 import { Location } from '@/graphql'
 import { LocationCardStats } from './LocationCardStats'
@@ -8,9 +9,23 @@ type LocationCardProps = {
   compact?: boolean
 }
 
+const useStyles = createStyles((theme) => ({
+  root: {
+    cursor: 'pointer'
+  }
+}))
+
 export const LocationCard = (props: LocationCardProps) => {
+  const { classes } = useStyles()
+  const navigate = useNavigate()
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    navigate(`/location/${props.location.id}`)
+  }
+
   return (
-    <Card shadow='sm' padding='lg' radius='sm' withBorder>
+    <Card shadow='sm' padding='lg' radius='sm' withBorder className={classes.root} onClick={handleClick}>
       {!props.compact ? (
         <Card.Section>
           <Image

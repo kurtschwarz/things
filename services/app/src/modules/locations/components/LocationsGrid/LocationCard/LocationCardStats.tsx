@@ -1,4 +1,4 @@
-import { createStyles, rem, Card, Image, Text } from '@mantine/core'
+import { createStyles, rem, Card } from '@mantine/core'
 
 import { LocationCardStat } from './LocationCardStat'
 import { Location } from '@/graphql'

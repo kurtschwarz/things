@@ -4,7 +4,7 @@ import { BiStar } from 'react-icons/bi'
 import { Location, LocationConnection } from '@/graphql'
 
 import { LocationsGridGroup } from './LocationsGridGroup'
-import { LocationCard } from '../LocationCard/LocationCard'
+import { LocationCard } from './LocationCard/LocationCard'
 
 type LocationsGridProps = {
   locations: LocationConnection
