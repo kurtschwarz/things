@@ -18,7 +18,7 @@ type Location struct {
 func (Location) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
-		field.UUID("parent_id", uuid.UUID{}).Optional(),
+		field.UUID("parent_id", uuid.UUID{}).Optional().Nillable(),
 		field.Text("name").Optional(),
 	}
 }

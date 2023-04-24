@@ -21,7 +21,7 @@ type Location struct {
 	// DeletedAt holds the value of the "deleted_at" field.
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
 	// ParentID holds the value of the "parent_id" field.
-	ParentID uuid.UUID `json:"parent_id,omitempty"`
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -72,11 +72,13 @@ func (*Location) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case location.FieldParentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case location.FieldName:
 			values[i] = new(sql.NullString)
 		case location.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
-		case location.FieldID, location.FieldParentID:
+		case location.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -106,10 +108,11 @@ func (l *Location) assignValues(columns []string, values []any) error {
 				l.DeletedAt = value.Time
 			}
 		case location.FieldParentID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
-			} else if value != nil {
-				l.ParentID = *value
+			} else if value.Valid {
+				l.ParentID = new(uuid.UUID)
+				*l.ParentID = *value.S.(*uuid.UUID)
 			}
 		case location.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -166,8 +169,10 @@ func (l *Location) String() string {
 	builder.WriteString("deleted_at=")
 	builder.WriteString(l.DeletedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("parent_id=")
-	builder.WriteString(fmt.Sprintf("%v", l.ParentID))
+	if v := l.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(l.Name)

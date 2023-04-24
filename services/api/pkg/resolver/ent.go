@@ -52,6 +52,10 @@ func (r *locationResolver) ID(ctx context.Context, obj *ent.Location) (string, e
 
 // ParentID is the resolver for the parentID field.
 func (r *locationResolver) ParentID(ctx context.Context, obj *ent.Location) (*string, error) {
+	if obj.ParentID == nil {
+		return nil, nil
+	}
+
 	return util.StringPtr(obj.ParentID.String()), nil
 }
 

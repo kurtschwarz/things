@@ -1,10 +1,10 @@
 import { gql } from '@apollo/client'
 
-export const generateLocationParentsRecursive = (depth = 5): string => `
-  parent {
+export const generateLocationRelationRecursive = (relation: string, depth = 5): string => `
+  ${relation} {
     id
     name
-    ${depth - 1 ? generateLocationParentsRecursive(depth - 1) : ''}
+    ${depth - 1 ? generateLocationRelationRecursive(relation, depth - 1) : ''}
   }
 `
 
@@ -16,6 +16,7 @@ export const GET_ALL_LOCATIONS = gql`
           id
           name
           parentID
+          ${generateLocationRelationRecursive('children', 3)}
         }
       }
     }
@@ -30,7 +31,7 @@ export const GET_ALL_LOCATION_PARENTS_RECURSIVE = gql`
           id
           name
           parentID
-          ${generateLocationParentsRecursive()}
+          ${generateLocationRelationRecursive('parent')}
         }
       }
     }

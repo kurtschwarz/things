@@ -10,6 +10,11 @@ export const ProtectedLayout = () => {
     <AppShell
       layout='alt'
       navbar={<Sidebar />}
+      styles={(theme) => ({
+        main: {
+          backgroundColor: theme.colors.gray[0]
+        }
+      })}
     >
       {outlet}
     </AppShell>

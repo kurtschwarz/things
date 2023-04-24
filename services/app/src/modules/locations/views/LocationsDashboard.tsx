@@ -1,4 +1,4 @@
-import { Button, Title } from '@mantine/core'
+import { createStyles, Button, Text, Header } from '@mantine/core'
 import { useLoaderData, useRevalidator } from 'react-router'
 
 import { client } from '@/graphql/client'
@@ -6,6 +6,11 @@ import { Location } from '@/graphql/types'
 
 import { GET_ALL_LOCATIONS } from '../queries'
 import { openCreateLocationMutationModal, openUpdateLocationMutationModal } from '../helpers'
+import LocationsGrid from '../components/LocationsGrid/LocationsGrid'
+
+const useStyles = createStyles((theme) => ({
+  root: {},
+}))
 
 export const locationsDashboardLoader = async () =>
   client.query({
@@ -13,40 +18,28 @@ export const locationsDashboardLoader = async () =>
   })
 
 export const LocationsDashboard = () => {
+  const { classes } = useStyles()
   const { data } = useLoaderData() as { data: { locations: { edges: { node: Location }[] } } }
   const revalidator = useRevalidator()
 
-  const locationsList = data.locations?.edges?.map(({ node: location }) => {
-    const handleEditClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-      event.preventDefault()
-
-      openUpdateLocationMutationModal(location, {
-        onCompleted: () => revalidator.revalidate()
-      })
-    }
-
-    return (
-      <li key={location.id}>{location.name} <a href='#' onClick={handleEditClick}>Edit</a></li>
-    )
-  })
-
   return (
-    <div>
-      <Title order={2}>Locations</Title>
+    <div className={classes.root}>
+      <Header height={{ base: 50, md: 70 }} p='md'>
+        <div style={{ display: 'flex', alignItems: 'center', height: '100%', justifyContent: 'space-between' }}>
+          <Text>Locations</Text>
+          <Button
+            onClick={() => {
+              openCreateLocationMutationModal({
+                onCompleted: () => revalidator.revalidate()
+              })
+            }
+          }>
+            New Location
+          </Button>
+        </div>
+      </Header>
 
-      <Button
-        onClick={() => {
-          openCreateLocationMutationModal({
-            onCompleted: () => revalidator.revalidate()
-          })
-        }
-      }>
-        New Location
-      </Button>
-
-      <ul>
-        {locationsList}
-      </ul>
+      <LocationsGrid locations={data.locations?.edges} />
     </div>
   )
 }
