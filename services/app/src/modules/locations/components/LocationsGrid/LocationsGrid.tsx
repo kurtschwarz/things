@@ -72,8 +72,8 @@ export const LocationsGrid = (props: LocationsGridProps) => {
         name={'All Other Locations'}
         divider={rootLocationsWithChildren.length > 0}
       >
-        {rootLocationsWithoutChildren?.map((edge) => (
-          <Grid>
+        <Grid>
+          {rootLocationsWithoutChildren?.map((edge) => (
             <Grid.Col span={4}>
               <Card shadow='sm' padding='lg' radius='sm' withBorder>
                 <Card.Section>
@@ -88,8 +88,8 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                 <Text size='sm' italic={!edge?.node?.description}>{edge?.node?.description || 'No description provided.'}</Text>
               </Card>
             </Grid.Col>
-          </Grid>
-        ))}
+          ))}
+        </Grid>
       </LocationsGridGroup>
     </Stack>
   )
