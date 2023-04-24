@@ -2,11 +2,22 @@ import { gql } from '@/graphql'
 
 export const GET_LOCATION = gql`
   query GetLocation ($id: ID!) {
-    locations (where: { id: $id }) {
-      edges {
-        node {
+    location (id: $id) {
+      id
+      name
+
+      parent {
+        id
+        name
+
+        parent {
           id
           name
+
+          parent {
+            id
+            name
+          }
         }
       }
     }

@@ -1,13 +1,18 @@
-import { createStyles, Text, Button, Header } from '@mantine/core'
+import { createStyles, rem, Text, Button, Header, Group } from '@mantine/core'
 import { useLoaderData, useRevalidator } from 'react-router'
 
 import { client } from '@/graphql'
 
 import { GET_LOCATION } from '../queries'
 import { openCreateLocationMutationModal } from '../helpers'
+import { LocationBreadcrumbs } from '../components/LocationBreadcrumbs'
 
 const useStyles = createStyles((theme) => ({
   root: {},
+  breadcrumbs: {
+    height: rem(40),
+    background: `${theme.colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[2]}`
+  }
 }))
 
 export const locationDetailLoader = async ({ params }) => {
@@ -25,9 +30,9 @@ export const LocationDetail = () => {
 
   return (
     <div className={classes.root}>
-      <Header height={{ base: 50, md: 70 }} p='md'>
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%', justifyContent: 'space-between' }}>
-          <Text>{data.locations.edges[0].node.name}</Text>
+      <Header height={{ base: 101 }}>
+        <Group style={{ height: 61, justifyContent: 'space-between' }} pl='md' pr='md'>
+          <Text weight={600}>Locations</Text>
           <Button
             onClick={() => {
               openCreateLocationMutationModal({
@@ -37,7 +42,11 @@ export const LocationDetail = () => {
           }>
             New Location
           </Button>
-        </div>
+        </Group>
+
+        <Group className={classes.breadcrumbs} pl='md' pr='md'>
+          <LocationBreadcrumbs location={data.location} />
+        </Group>
       </Header>
     </div>
   )

@@ -1,4 +1,4 @@
-import { createStyles, Button, Text, Header } from '@mantine/core'
+import { createStyles, Button, Text, Header, Group } from '@mantine/core'
 import { useLoaderData, useRevalidator } from 'react-router'
 
 import { client } from '@/graphql'
@@ -23,9 +23,9 @@ export const LocationsDashboard = () => {
 
   return (
     <div className={classes.root}>
-      <Header height={{ base: 50, md: 70 }} p='md'>
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%', justifyContent: 'space-between' }}>
-          <Text>Locations</Text>
+      <Header height={{ base: 61 }}>
+        <Group style={{ height: 61, justifyContent: 'space-between' }} pl='md' pr='md'>
+          <Text weight={600}>Locations</Text>
           <Button
             onClick={() => {
               openCreateLocationMutationModal({
@@ -35,7 +35,7 @@ export const LocationsDashboard = () => {
           }>
             New Location
           </Button>
-        </div>
+        </Group>
       </Header>
 
       <LocationsGrid locations={data.locations} />
