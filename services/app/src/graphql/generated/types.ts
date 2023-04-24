@@ -402,6 +402,7 @@ export type PageInfo = {
 export type Query = {
   __typename?: 'Query';
   assets: AssetConnection;
+  location: Location;
   locations: LocationConnection;
   /** Fetches an object given its ID. */
   node?: Maybe<Node>;
@@ -418,6 +419,11 @@ export type QueryAssetsArgs = {
   first?: InputMaybe<Scalars['Int']>;
   last?: InputMaybe<Scalars['Int']>;
   where?: InputMaybe<AssetWhereInput>;
+};
+
+
+export type QueryLocationArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -681,10 +687,17 @@ export type CreateLocationMutationVariables = Exact<{
 
 export type CreateLocationMutation = { __typename?: 'Mutation', createLocation: { __typename?: 'Location', id: string } };
 
+export type GetLocationQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type GetLocationQuery = { __typename?: 'Query', locations: { __typename?: 'LocationConnection', edges?: Array<{ __typename?: 'LocationEdge', node?: { __typename?: 'Location', id: string, name?: string | null } | null } | null> | null } };
+
 export type GetAllLocationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllLocationsQuery = { __typename?: 'Query', locations: { __typename?: 'LocationConnection', edges?: Array<{ __typename?: 'LocationEdge', node?: { __typename?: 'Location', id: string, name?: string | null, description?: string | null, parentID?: string | null, children?: Array<{ __typename?: 'Location', id: string, name?: string | null, description?: string | null, children?: Array<{ __typename?: 'Location', id: string, name?: string | null, description?: string | null }> | null }> | null } | null } | null> | null } };
+export type GetAllLocationsQuery = { __typename?: 'Query', locations: { __typename?: 'LocationConnection', edges?: Array<{ __typename?: 'LocationEdge', node?: { __typename?: 'Location', id: string, name?: string | null, description?: string | null, parentID?: string | null, stats?: { __typename?: 'LocationStats', totalLocations?: number | null, totalItems?: number | null, totalValue?: number | null } | null, children?: Array<{ __typename?: 'Location', id: string, name?: string | null, description?: string | null, stats?: { __typename?: 'LocationStats', totalLocations?: number | null, totalItems?: number | null, totalValue?: number | null } | null, children?: Array<{ __typename?: 'Location', id: string, name?: string | null, description?: string | null, stats?: { __typename?: 'LocationStats', totalLocations?: number | null, totalItems?: number | null, totalValue?: number | null } | null, children?: Array<{ __typename?: 'Location', id: string, name?: string | null, description?: string | null, stats?: { __typename?: 'LocationStats', totalLocations?: number | null, totalItems?: number | null, totalValue?: number | null } | null }> | null }> | null }> | null } | null } | null> | null } };
 
 export type GetAllLocationsWithParentsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -759,6 +772,46 @@ export function useCreateLocationMutation(baseOptions?: Apollo.MutationHookOptio
 export type CreateLocationMutationHookResult = ReturnType<typeof useCreateLocationMutation>;
 export type CreateLocationMutationResult = Apollo.MutationResult<CreateLocationMutation>;
 export type CreateLocationMutationOptions = Apollo.BaseMutationOptions<CreateLocationMutation, CreateLocationMutationVariables>;
+export const GetLocationDocument = gql`
+    query GetLocation($id: ID!) {
+  locations(where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetLocationQuery__
+ *
+ * To run a query within a React component, call `useGetLocationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLocationQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetLocationQuery(baseOptions: Apollo.QueryHookOptions<GetLocationQuery, GetLocationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLocationQuery, GetLocationQueryVariables>(GetLocationDocument, options);
+      }
+export function useGetLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLocationQuery, GetLocationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLocationQuery, GetLocationQueryVariables>(GetLocationDocument, options);
+        }
+export type GetLocationQueryHookResult = ReturnType<typeof useGetLocationQuery>;
+export type GetLocationLazyQueryHookResult = ReturnType<typeof useGetLocationLazyQuery>;
+export type GetLocationQueryResult = Apollo.QueryResult<GetLocationQuery, GetLocationQueryVariables>;
 export const GetAllLocationsDocument = gql`
     query GetAllLocations {
   locations {
@@ -768,19 +821,39 @@ export const GetAllLocationsDocument = gql`
         name
         description
         parentID
+        stats {
+          totalLocations
+          totalItems
+          totalValue
+        }
         children {
           id
           name
           description
-          children {
-            id
-            name
-            description
+          stats {
+            totalLocations
+            totalItems
+            totalValue
           }
           children {
             id
             name
             description
+            stats {
+              totalLocations
+              totalItems
+              totalValue
+            }
+            children {
+              id
+              name
+              description
+              stats {
+                totalLocations
+                totalItems
+                totalValue
+              }
+            }
           }
         }
       }

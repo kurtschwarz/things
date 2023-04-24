@@ -118,3 +118,8 @@ func (r *mutationResolver) DeleteLocation(ctx context.Context, id uuid.UUID) (bo
 
 	return true, nil
 }
+
+// Location is the resolver for the location field.
+func (r *queryResolver) Location(ctx context.Context, id uuid.UUID) (*ent.Location, error) {
+	return r.client.Location.Query().Where(location.ID(id)).Only(ctx)
+}

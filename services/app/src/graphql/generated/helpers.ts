@@ -81,9 +81,10 @@ export type PageInfoFieldPolicy = {
 	hasPreviousPage?: FieldPolicy<any> | FieldReadFunction<any>,
 	startCursor?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('assets' | 'locations' | 'node' | 'nodes' | 'tags' | 'users' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('assets' | 'location' | 'locations' | 'node' | 'nodes' | 'tags' | 'users' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
 	assets?: FieldPolicy<any> | FieldReadFunction<any>,
+	location?: FieldPolicy<any> | FieldReadFunction<any>,
 	locations?: FieldPolicy<any> | FieldReadFunction<any>,
 	node?: FieldPolicy<any> | FieldReadFunction<any>,
 	nodes?: FieldPolicy<any> | FieldReadFunction<any>,

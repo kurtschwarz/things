@@ -8,6 +8,10 @@ extend type Location {
   stats: LocationStats
 }
 
+extend type Query {
+  location(id: ID!): Location!
+}
+
 extend type Mutation {
   createLocation(input: CreateLocationInput!): Location!
   updateLocation(id: ID!, input: UpdateLocationInput!): Location!
