@@ -17,7 +17,7 @@ autobind:
 models:
   ID:
     model:
-      - github.com/99designs/gqlgen/graphql.ID
+      - things-api/ent/schema/uuidgql.UUID
   Node:
     model:
       - things-api/ent.Noder

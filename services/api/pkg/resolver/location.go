@@ -18,12 +18,12 @@ func (r *mutationResolver) CreateLocation(ctx context.Context, input ent.CreateL
 }
 
 // UpdateLocation is the resolver for the updateLocation field.
-func (r *mutationResolver) UpdateLocation(ctx context.Context, id string, input ent.UpdateLocationInput) (*ent.Location, error) {
-	return r.client.Location.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
+func (r *mutationResolver) UpdateLocation(ctx context.Context, id uuid.UUID, input ent.UpdateLocationInput) (*ent.Location, error) {
+	return r.client.Location.UpdateOneID(id).SetInput(input).Save(ctx)
 }
 
 // DeleteLocation is the resolver for the deleteLocation field.
-func (r *mutationResolver) DeleteLocation(ctx context.Context, id string) (bool, error) {
+func (r *mutationResolver) DeleteLocation(ctx context.Context, id uuid.UUID) (bool, error) {
 	var findAllLocationsIDsToDelete func(locationID uuid.UUID, locationIDs []uuid.UUID) ([]uuid.UUID, error)
 	findAllLocationsIDsToDelete = func(locationID uuid.UUID, locationIDs []uuid.UUID) ([]uuid.UUID, error) {
 		locationIDs = append(locationIDs, locationID)
@@ -48,7 +48,7 @@ func (r *mutationResolver) DeleteLocation(ctx context.Context, id string) (bool,
 		return locationIDs, nil
 	}
 
-	locationIDs, err := findAllLocationsIDsToDelete(uuid.MustParse(id), []uuid.UUID{})
+	locationIDs, err := findAllLocationsIDsToDelete(id, []uuid.UUID{})
 	if err != nil {
 		return false, err
 	}

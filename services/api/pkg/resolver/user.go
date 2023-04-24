@@ -17,6 +17,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserI
 }
 
 // UpdateUser is the resolver for the updateUser field.
-func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input ent.UpdateUserInput) (*ent.User, error) {
-	return r.client.User.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
+func (r *mutationResolver) UpdateUser(ctx context.Context, id uuid.UUID, input ent.UpdateUserInput) (*ent.User, error) {
+	return r.client.User.UpdateOneID(id).SetInput(input).Save(ctx)
 }

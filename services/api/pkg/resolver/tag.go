@@ -17,6 +17,6 @@ func (r *mutationResolver) CreateTag(ctx context.Context, input ent.CreateTagInp
 }
 
 // UpdateTag is the resolver for the updateTag field.
-func (r *mutationResolver) UpdateTag(ctx context.Context, id string, input ent.UpdateTagInput) (*ent.Tag, error) {
-	return r.client.Tag.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
+func (r *mutationResolver) UpdateTag(ctx context.Context, id uuid.UUID, input ent.UpdateTagInput) (*ent.Tag, error) {
+	return r.client.Tag.UpdateOneID(id).SetInput(input).Save(ctx)
 }

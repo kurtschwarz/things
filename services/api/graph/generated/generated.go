@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"things-api/ent"
+	"things-api/ent/schema/uuidgql"
 	"time"
 
 	"entgo.io/contrib/entgql"
@@ -39,26 +40,8 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Asset() AssetResolver
-	AssetTag() AssetTagResolver
-	Location() LocationResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
-	Tag() TagResolver
-	User() UserResolver
-	AssetTagWhereInput() AssetTagWhereInputResolver
-	AssetWhereInput() AssetWhereInputResolver
-	CreateAssetInput() CreateAssetInputResolver
-	CreateLocationInput() CreateLocationInputResolver
-	CreateTagInput() CreateTagInputResolver
-	CreateUserInput() CreateUserInputResolver
-	LocationWhereInput() LocationWhereInputResolver
-	TagWhereInput() TagWhereInputResolver
-	UpdateAssetInput() UpdateAssetInputResolver
-	UpdateLocationInput() UpdateLocationInputResolver
-	UpdateTagInput() UpdateTagInputResolver
-	UpdateUserInput() UpdateUserInputResolver
-	UserWhereInput() UserWhereInputResolver
 }
 
 type DirectiveRoot struct {
@@ -122,11 +105,11 @@ type ComplexityRoot struct {
 		CreateLocation func(childComplexity int, input ent.CreateLocationInput) int
 		CreateTag      func(childComplexity int, input ent.CreateTagInput) int
 		CreateUser     func(childComplexity int, input ent.CreateUserInput) int
-		DeleteLocation func(childComplexity int, id string) int
-		UpdateAsset    func(childComplexity int, id string, input ent.UpdateAssetInput) int
-		UpdateLocation func(childComplexity int, id string, input ent.UpdateLocationInput) int
-		UpdateTag      func(childComplexity int, id string, input ent.UpdateTagInput) int
-		UpdateUser     func(childComplexity int, id string, input ent.UpdateUserInput) int
+		DeleteLocation func(childComplexity int, id uuid.UUID) int
+		UpdateAsset    func(childComplexity int, id uuid.UUID, input ent.UpdateAssetInput) int
+		UpdateLocation func(childComplexity int, id uuid.UUID, input ent.UpdateLocationInput) int
+		UpdateTag      func(childComplexity int, id uuid.UUID, input ent.UpdateTagInput) int
+		UpdateUser     func(childComplexity int, id uuid.UUID, input ent.UpdateUserInput) int
 	}
 
 	PageInfo struct {
@@ -139,8 +122,8 @@ type ComplexityRoot struct {
 	Query struct {
 		Assets    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.AssetWhereInput) int
 		Locations func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.LocationWhereInput) int
-		Node      func(childComplexity int, id string) int
-		Nodes     func(childComplexity int, ids []string) int
+		Node      func(childComplexity int, id uuid.UUID) int
+		Nodes     func(childComplexity int, ids []uuid.UUID) int
 		Tags      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TagWhereInput) int
 		Users     func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.UserWhereInput) int
 	}
@@ -183,159 +166,24 @@ type ComplexityRoot struct {
 	}
 }
 
-type AssetResolver interface {
-	ID(ctx context.Context, obj *ent.Asset) (string, error)
-	ParentID(ctx context.Context, obj *ent.Asset) (*string, error)
-	LocationID(ctx context.Context, obj *ent.Asset) (*string, error)
-}
-type AssetTagResolver interface {
-	ID(ctx context.Context, obj *ent.AssetTag) (string, error)
-	AssetID(ctx context.Context, obj *ent.AssetTag) (string, error)
-	TagID(ctx context.Context, obj *ent.AssetTag) (string, error)
-}
-type LocationResolver interface {
-	ID(ctx context.Context, obj *ent.Location) (string, error)
-
-	ParentID(ctx context.Context, obj *ent.Location) (*string, error)
-}
 type MutationResolver interface {
 	CreateAsset(ctx context.Context, input ent.CreateAssetInput) (*ent.Asset, error)
-	UpdateAsset(ctx context.Context, id string, input ent.UpdateAssetInput) (*ent.Asset, error)
+	UpdateAsset(ctx context.Context, id uuid.UUID, input ent.UpdateAssetInput) (*ent.Asset, error)
 	CreateLocation(ctx context.Context, input ent.CreateLocationInput) (*ent.Location, error)
-	UpdateLocation(ctx context.Context, id string, input ent.UpdateLocationInput) (*ent.Location, error)
-	DeleteLocation(ctx context.Context, id string) (bool, error)
+	UpdateLocation(ctx context.Context, id uuid.UUID, input ent.UpdateLocationInput) (*ent.Location, error)
+	DeleteLocation(ctx context.Context, id uuid.UUID) (bool, error)
 	CreateTag(ctx context.Context, input ent.CreateTagInput) (*ent.Tag, error)
-	UpdateTag(ctx context.Context, id string, input ent.UpdateTagInput) (*ent.Tag, error)
+	UpdateTag(ctx context.Context, id uuid.UUID, input ent.UpdateTagInput) (*ent.Tag, error)
 	CreateUser(ctx context.Context, input ent.CreateUserInput) (*ent.User, error)
-	UpdateUser(ctx context.Context, id string, input ent.UpdateUserInput) (*ent.User, error)
+	UpdateUser(ctx context.Context, id uuid.UUID, input ent.UpdateUserInput) (*ent.User, error)
 }
 type QueryResolver interface {
-	Node(ctx context.Context, id string) (ent.Noder, error)
-	Nodes(ctx context.Context, ids []string) ([]ent.Noder, error)
+	Node(ctx context.Context, id uuid.UUID) (ent.Noder, error)
+	Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder, error)
 	Assets(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.AssetWhereInput) (*ent.AssetConnection, error)
 	Locations(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.LocationWhereInput) (*ent.LocationConnection, error)
 	Tags(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TagWhereInput) (*ent.TagConnection, error)
 	Users(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.UserWhereInput) (*ent.UserConnection, error)
-}
-type TagResolver interface {
-	ID(ctx context.Context, obj *ent.Tag) (string, error)
-}
-type UserResolver interface {
-	ID(ctx context.Context, obj *ent.User) (string, error)
-	ParentID(ctx context.Context, obj *ent.User) (*string, error)
-}
-
-type AssetTagWhereInputResolver interface {
-	ID(ctx context.Context, obj *ent.AssetTagWhereInput, data *string) error
-	IDNeq(ctx context.Context, obj *ent.AssetTagWhereInput, data *string) error
-	IDIn(ctx context.Context, obj *ent.AssetTagWhereInput, data []string) error
-	IDNotIn(ctx context.Context, obj *ent.AssetTagWhereInput, data []string) error
-	IDGt(ctx context.Context, obj *ent.AssetTagWhereInput, data *string) error
-	IDGte(ctx context.Context, obj *ent.AssetTagWhereInput, data *string) error
-	IDLt(ctx context.Context, obj *ent.AssetTagWhereInput, data *string) error
-	IDLte(ctx context.Context, obj *ent.AssetTagWhereInput, data *string) error
-}
-type AssetWhereInputResolver interface {
-	ID(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	IDNeq(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	IDIn(ctx context.Context, obj *ent.AssetWhereInput, data []string) error
-	IDNotIn(ctx context.Context, obj *ent.AssetWhereInput, data []string) error
-	IDGt(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	IDGte(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	IDLt(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	IDLte(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	ParentID(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	ParentIDNeq(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	ParentIDIn(ctx context.Context, obj *ent.AssetWhereInput, data []string) error
-	ParentIDNotIn(ctx context.Context, obj *ent.AssetWhereInput, data []string) error
-
-	LocationID(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	LocationIDNeq(ctx context.Context, obj *ent.AssetWhereInput, data *string) error
-	LocationIDIn(ctx context.Context, obj *ent.AssetWhereInput, data []string) error
-	LocationIDNotIn(ctx context.Context, obj *ent.AssetWhereInput, data []string) error
-}
-type CreateAssetInputResolver interface {
-	ParentID(ctx context.Context, obj *ent.CreateAssetInput, data *string) error
-	ChildIDs(ctx context.Context, obj *ent.CreateAssetInput, data []string) error
-	LocationID(ctx context.Context, obj *ent.CreateAssetInput, data *string) error
-	TagIDs(ctx context.Context, obj *ent.CreateAssetInput, data []string) error
-}
-type CreateLocationInputResolver interface {
-	ParentID(ctx context.Context, obj *ent.CreateLocationInput, data *string) error
-	ChildIDs(ctx context.Context, obj *ent.CreateLocationInput, data []string) error
-}
-type CreateTagInputResolver interface {
-	AssetIDs(ctx context.Context, obj *ent.CreateTagInput, data []string) error
-}
-type CreateUserInputResolver interface {
-	ParentID(ctx context.Context, obj *ent.CreateUserInput, data *string) error
-	ChildIDs(ctx context.Context, obj *ent.CreateUserInput, data []string) error
-}
-type LocationWhereInputResolver interface {
-	ID(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	IDNeq(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	IDIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error
-	IDNotIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error
-	IDGt(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	IDGte(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	IDLt(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	IDLte(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-
-	ParentID(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	ParentIDNeq(ctx context.Context, obj *ent.LocationWhereInput, data *string) error
-	ParentIDIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error
-	ParentIDNotIn(ctx context.Context, obj *ent.LocationWhereInput, data []string) error
-}
-type TagWhereInputResolver interface {
-	ID(ctx context.Context, obj *ent.TagWhereInput, data *string) error
-	IDNeq(ctx context.Context, obj *ent.TagWhereInput, data *string) error
-	IDIn(ctx context.Context, obj *ent.TagWhereInput, data []string) error
-	IDNotIn(ctx context.Context, obj *ent.TagWhereInput, data []string) error
-	IDGt(ctx context.Context, obj *ent.TagWhereInput, data *string) error
-	IDGte(ctx context.Context, obj *ent.TagWhereInput, data *string) error
-	IDLt(ctx context.Context, obj *ent.TagWhereInput, data *string) error
-	IDLte(ctx context.Context, obj *ent.TagWhereInput, data *string) error
-}
-type UpdateAssetInputResolver interface {
-	ParentID(ctx context.Context, obj *ent.UpdateAssetInput, data *string) error
-
-	AddChildIDs(ctx context.Context, obj *ent.UpdateAssetInput, data []string) error
-	RemoveChildIDs(ctx context.Context, obj *ent.UpdateAssetInput, data []string) error
-
-	LocationID(ctx context.Context, obj *ent.UpdateAssetInput, data *string) error
-
-	AddTagIDs(ctx context.Context, obj *ent.UpdateAssetInput, data []string) error
-	RemoveTagIDs(ctx context.Context, obj *ent.UpdateAssetInput, data []string) error
-}
-type UpdateLocationInputResolver interface {
-	ParentID(ctx context.Context, obj *ent.UpdateLocationInput, data *string) error
-
-	AddChildIDs(ctx context.Context, obj *ent.UpdateLocationInput, data []string) error
-	RemoveChildIDs(ctx context.Context, obj *ent.UpdateLocationInput, data []string) error
-}
-type UpdateTagInputResolver interface {
-	AddAssetIDs(ctx context.Context, obj *ent.UpdateTagInput, data []string) error
-	RemoveAssetIDs(ctx context.Context, obj *ent.UpdateTagInput, data []string) error
-}
-type UpdateUserInputResolver interface {
-	ParentID(ctx context.Context, obj *ent.UpdateUserInput, data *string) error
-
-	AddChildIDs(ctx context.Context, obj *ent.UpdateUserInput, data []string) error
-	RemoveChildIDs(ctx context.Context, obj *ent.UpdateUserInput, data []string) error
-}
-type UserWhereInputResolver interface {
-	ID(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	IDNeq(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	IDIn(ctx context.Context, obj *ent.UserWhereInput, data []string) error
-	IDNotIn(ctx context.Context, obj *ent.UserWhereInput, data []string) error
-	IDGt(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	IDGte(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	IDLt(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	IDLte(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	ParentID(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	ParentIDNeq(ctx context.Context, obj *ent.UserWhereInput, data *string) error
-	ParentIDIn(ctx context.Context, obj *ent.UserWhereInput, data []string) error
-	ParentIDNotIn(ctx context.Context, obj *ent.UserWhereInput, data []string) error
 }
 
 type executableSchema struct {
@@ -628,7 +476,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteLocation(childComplexity, args["id"].(string)), true
+		return e.complexity.Mutation.DeleteLocation(childComplexity, args["id"].(uuid.UUID)), true
 
 	case "Mutation.updateAsset":
 		if e.complexity.Mutation.UpdateAsset == nil {
@@ -640,7 +488,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateAsset(childComplexity, args["id"].(string), args["input"].(ent.UpdateAssetInput)), true
+		return e.complexity.Mutation.UpdateAsset(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateAssetInput)), true
 
 	case "Mutation.updateLocation":
 		if e.complexity.Mutation.UpdateLocation == nil {
@@ -652,7 +500,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateLocation(childComplexity, args["id"].(string), args["input"].(ent.UpdateLocationInput)), true
+		return e.complexity.Mutation.UpdateLocation(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateLocationInput)), true
 
 	case "Mutation.updateTag":
 		if e.complexity.Mutation.UpdateTag == nil {
@@ -664,7 +512,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateTag(childComplexity, args["id"].(string), args["input"].(ent.UpdateTagInput)), true
+		return e.complexity.Mutation.UpdateTag(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateTagInput)), true
 
 	case "Mutation.updateUser":
 		if e.complexity.Mutation.UpdateUser == nil {
@@ -676,7 +524,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateUser(childComplexity, args["id"].(string), args["input"].(ent.UpdateUserInput)), true
+		return e.complexity.Mutation.UpdateUser(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateUserInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -740,7 +588,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Node(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.Node(childComplexity, args["id"].(uuid.UUID)), true
 
 	case "Query.nodes":
 		if e.complexity.Query.Nodes == nil {
@@ -752,7 +600,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Nodes(childComplexity, args["ids"].([]string)), true
+		return e.complexity.Query.Nodes(childComplexity, args["ids"].([]uuid.UUID)), true
 
 	case "Query.tags":
 		if e.complexity.Query.Tags == nil {
@@ -1642,10 +1490,10 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_deleteLocation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1657,10 +1505,10 @@ func (ec *executionContext) field_Mutation_deleteLocation_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_updateAsset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1681,10 +1529,10 @@ func (ec *executionContext) field_Mutation_updateAsset_args(ctx context.Context,
 func (ec *executionContext) field_Mutation_updateLocation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1705,10 +1553,10 @@ func (ec *executionContext) field_Mutation_updateLocation_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_updateTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1729,10 +1577,10 @@ func (ec *executionContext) field_Mutation_updateTag_args(ctx context.Context, r
 func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1870,10 +1718,10 @@ func (ec *executionContext) field_Query_locations_args(ctx context.Context, rawA
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1885,10 +1733,10 @@ func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs m
 func (ec *executionContext) field_Query_nodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []string
+	var arg0 []uuid.UUID
 	if tmp, ok := rawArgs["ids"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
-		arg0, err = ec.unmarshalNID2ᚕstringᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalNID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2051,7 +1899,7 @@ func (ec *executionContext) _Asset_id(ctx context.Context, field graphql.Collect
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Asset().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2063,17 +1911,17 @@ func (ec *executionContext) _Asset_id(ctx context.Context, field graphql.Collect
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -2095,7 +1943,7 @@ func (ec *executionContext) _Asset_parentID(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Asset().ParentID(rctx, obj)
+		return obj.ParentID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2104,17 +1952,17 @@ func (ec *executionContext) _Asset_parentID(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_parentID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -2136,7 +1984,7 @@ func (ec *executionContext) _Asset_locationID(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Asset().LocationID(rctx, obj)
+		return obj.LocationID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2145,17 +1993,17 @@ func (ec *executionContext) _Asset_locationID(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_locationID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -2751,7 +2599,7 @@ func (ec *executionContext) _AssetTag_id(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AssetTag().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2763,17 +2611,17 @@ func (ec *executionContext) _AssetTag_id(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AssetTag_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AssetTag",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -2795,7 +2643,7 @@ func (ec *executionContext) _AssetTag_assetID(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AssetTag().AssetID(rctx, obj)
+		return obj.AssetID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2807,17 +2655,17 @@ func (ec *executionContext) _AssetTag_assetID(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AssetTag_assetID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AssetTag",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -2839,7 +2687,7 @@ func (ec *executionContext) _AssetTag_tagID(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AssetTag().TagID(rctx, obj)
+		return obj.TagID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2851,17 +2699,17 @@ func (ec *executionContext) _AssetTag_tagID(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AssetTag_tagID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AssetTag",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -3001,7 +2849,7 @@ func (ec *executionContext) _Location_id(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Location().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3013,17 +2861,17 @@ func (ec *executionContext) _Location_id(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Location_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Location",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -3086,7 +2934,7 @@ func (ec *executionContext) _Location_parentID(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Location().ParentID(rctx, obj)
+		return obj.ParentID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3095,17 +2943,17 @@ func (ec *executionContext) _Location_parentID(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Location_parentID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Location",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -3644,7 +3492,7 @@ func (ec *executionContext) _Mutation_updateAsset(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateAsset(rctx, fc.Args["id"].(string), fc.Args["input"].(ent.UpdateAssetInput))
+		return ec.resolvers.Mutation().UpdateAsset(rctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateAssetInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3790,7 +3638,7 @@ func (ec *executionContext) _Mutation_updateLocation(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateLocation(rctx, fc.Args["id"].(string), fc.Args["input"].(ent.UpdateLocationInput))
+		return ec.resolvers.Mutation().UpdateLocation(rctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateLocationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3861,7 +3709,7 @@ func (ec *executionContext) _Mutation_deleteLocation(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteLocation(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Mutation().DeleteLocation(rctx, fc.Args["id"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3981,7 +3829,7 @@ func (ec *executionContext) _Mutation_updateTag(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateTag(rctx, fc.Args["id"].(string), fc.Args["input"].(ent.UpdateTagInput))
+		return ec.resolvers.Mutation().UpdateTag(rctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateTagInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4113,7 +3961,7 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateUser(rctx, fc.Args["id"].(string), fc.Args["input"].(ent.UpdateUserInput))
+		return ec.resolvers.Mutation().UpdateUser(rctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateUserInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4350,7 +4198,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Node(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().Node(rctx, fc.Args["id"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4402,7 +4250,7 @@ func (ec *executionContext) _Query_nodes(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Nodes(rctx, fc.Args["ids"].([]string))
+		return ec.resolvers.Query().Nodes(rctx, fc.Args["ids"].([]uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4838,7 +4686,7 @@ func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.Collected
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Tag().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4850,17 +4698,17 @@ func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.Collected
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Tag",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -5277,7 +5125,7 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5289,17 +5137,17 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -5321,7 +5169,7 @@ func (ec *executionContext) _User_parentID(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().ParentID(rctx, obj)
+		return obj.ParentID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5330,17 +5178,17 @@ func (ec *executionContext) _User_parentID(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_parentID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -7552,88 +7400,64 @@ func (ec *executionContext) unmarshalInputAssetTagWhereInput(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().ID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDGt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDGte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDLt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetTagWhereInput().IDLte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -7684,132 +7508,96 @@ func (ec *executionContext) unmarshalInputAssetWhereInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().ID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDGt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDGte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDLt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().IDLte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentIDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().ParentIDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ParentIDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().ParentIDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ParentIDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().ParentIDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDIsNil":
@@ -7832,44 +7620,32 @@ func (ec *executionContext) unmarshalInputAssetWhereInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.LocationID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().LocationID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "locationIDNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationIDNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.LocationIDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().LocationIDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "locationIDIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationIDIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.LocationIDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().LocationIDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "locationIDNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationIDNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.LocationIDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.AssetWhereInput().LocationIDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "locationIDIsNil":
@@ -8120,44 +7896,32 @@ func (ec *executionContext) unmarshalInputCreateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateAssetInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "childIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateAssetInput().ChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "locationID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.LocationID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateAssetInput().LocationID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "tagIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.TagIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateAssetInput().TagIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -8208,22 +7972,16 @@ func (ec *executionContext) unmarshalInputCreateLocationInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateLocationInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "childIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateLocationInput().ChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -8258,11 +8016,8 @@ func (ec *executionContext) unmarshalInputCreateTagInput(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assetIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.AssetIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateTagInput().AssetIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -8297,22 +8052,16 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateUserInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "childIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CreateUserInput().ChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -8363,88 +8112,64 @@ func (ec *executionContext) unmarshalInputLocationWhereInput(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().ID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDGt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDGte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDLt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().IDLte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "deletedAt":
@@ -8531,44 +8256,32 @@ func (ec *executionContext) unmarshalInputLocationWhereInput(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentIDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().ParentIDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ParentIDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().ParentIDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ParentIDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.LocationWhereInput().ParentIDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDIsNil":
@@ -8907,88 +8620,64 @@ func (ec *executionContext) unmarshalInputTagWhereInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().ID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDGt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDGte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDLt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.TagWhereInput().IDLte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "name":
@@ -9183,11 +8872,8 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateAssetInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearParent":
@@ -9202,22 +8888,16 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addChildIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.AddChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateAssetInput().AddChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "removeChildIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeChildIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.RemoveChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateAssetInput().RemoveChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearChildren":
@@ -9232,11 +8912,8 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.LocationID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateAssetInput().LocationID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearLocation":
@@ -9251,22 +8928,16 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addTagIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.AddTagIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateAssetInput().AddTagIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "removeTagIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeTagIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.RemoveTagIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateAssetInput().RemoveTagIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearTags":
@@ -9349,11 +9020,8 @@ func (ec *executionContext) unmarshalInputUpdateLocationInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateLocationInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearParent":
@@ -9368,22 +9036,16 @@ func (ec *executionContext) unmarshalInputUpdateLocationInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addChildIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.AddChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateLocationInput().AddChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "removeChildIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeChildIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.RemoveChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateLocationInput().RemoveChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearChildren":
@@ -9434,22 +9096,16 @@ func (ec *executionContext) unmarshalInputUpdateTagInput(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addAssetIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.AddAssetIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateTagInput().AddAssetIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "removeAssetIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeAssetIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.RemoveAssetIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateTagInput().RemoveAssetIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearAsset":
@@ -9500,11 +9156,8 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateUserInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearParent":
@@ -9519,22 +9172,16 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addChildIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.AddChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateUserInput().AddChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "removeChildIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeChildIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.RemoveChildIDs, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UpdateUserInput().RemoveChildIDs(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "clearChildren":
@@ -9593,132 +9240,96 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().ID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.IDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDGt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idGTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDGTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDGte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLT":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLT, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDLt(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "idLTE":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.IDLTE, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().IDLte(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().ParentID(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDNEQ":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNEQ"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentIDNEQ, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().ParentIDNeq(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ParentIDIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().ParentIDIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDNotIn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNotIn"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			it.ParentIDNotIn, err = ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.UserWhereInput().ParentIDNotIn(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "parentIDIsNil":
@@ -9948,59 +9559,20 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Asset")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Asset_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Asset_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "parentID":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Asset_parentID(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._Asset_parentID(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "locationID":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Asset_locationID(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._Asset_locationID(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "name":
 
 			out.Values[i] = ec._Asset_name(ctx, field, obj)
@@ -10183,65 +9755,26 @@ func (ec *executionContext) _AssetTag(ctx context.Context, sel ast.SelectionSet,
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AssetTag")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AssetTag_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._AssetTag_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "assetID":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AssetTag_assetID(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._AssetTag_assetID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "tagID":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AssetTag_tagID(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._AssetTag_tagID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "asset":
 			field := field
 
@@ -10304,46 +9837,20 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Location")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Location_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Location_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "deletedAt":
 
 			out.Values[i] = ec._Location_deletedAt(ctx, field, obj)
 
 		case "parentID":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Location_parentID(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._Location_parentID(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "name":
 
 			out.Values[i] = ec._Location_name(ctx, field, obj)
@@ -10810,25 +10317,12 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Tag")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Tag_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Tag_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "name":
 
 			out.Values[i] = ec._Tag_name(ctx, field, obj)
@@ -10960,42 +10454,16 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("User")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._User_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "parentID":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_parentID(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._User_parentID(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "name":
 
 			out.Values[i] = ec._User_name(ctx, field, obj)
@@ -11527,13 +10995,13 @@ func (ec *executionContext) marshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCurso
 	return v
 }
 
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
+	res, err := uuidgql.UnmarshalUUID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
+func (ec *executionContext) marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+	res := uuidgql.MarshalUUID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -11542,16 +11010,16 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+func (ec *executionContext) unmarshalNID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx context.Context, v interface{}) ([]uuid.UUID, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]string, len(vSlice))
+	res := make([]uuid.UUID, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -11559,10 +11027,10 @@ func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v int
 	return res, nil
 }
 
-func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+func (ec *executionContext) marshalNID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx context.Context, sel ast.SelectionSet, v []uuid.UUID) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+		ret[i] = ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -12280,7 +11748,17 @@ func (ec *executionContext) marshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCu
 	return v
 }
 
-func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+func (ec *executionContext) unmarshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
+	res, err := uuidgql.UnmarshalUUID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+	res := uuidgql.MarshalUUID(v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx context.Context, v interface{}) ([]uuid.UUID, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -12289,10 +11767,10 @@ func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v int
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]string, len(vSlice))
+	res := make([]uuid.UUID, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -12300,13 +11778,13 @@ func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v int
 	return res, nil
 }
 
-func (ec *executionContext) marshalOID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+func (ec *executionContext) marshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx context.Context, sel ast.SelectionSet, v []uuid.UUID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+		ret[i] = ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -12318,19 +11796,19 @@ func (ec *executionContext) marshalOID2ᚕstringᚄ(ctx context.Context, sel ast
 	return ret
 }
 
-func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+func (ec *executionContext) unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := graphql.UnmarshalID(v)
+	res, err := uuidgql.UnmarshalUUID(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+func (ec *executionContext) marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v *uuid.UUID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	res := graphql.MarshalID(*v)
+	res := uuidgql.MarshalUUID(*v)
 	return res
 }
 

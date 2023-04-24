@@ -18,8 +18,8 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input ent.CreateAsse
 }
 
 // UpdateAsset is the resolver for the updateAsset field.
-func (r *mutationResolver) UpdateAsset(ctx context.Context, id string, input ent.UpdateAssetInput) (*ent.Asset, error) {
-	return r.client.Asset.UpdateOneID(uuid.MustParse(id)).SetInput(input).Save(ctx)
+func (r *mutationResolver) UpdateAsset(ctx context.Context, id uuid.UUID, input ent.UpdateAssetInput) (*ent.Asset, error) {
+	return r.client.Asset.UpdateOneID(id).SetInput(input).Save(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.
