@@ -30,7 +30,7 @@ export type AssetTagFieldPolicy = {
 	tag?: FieldPolicy<any> | FieldReadFunction<any>,
 	tagID?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type LocationKeySpecifier = ('children' | 'deletedAt' | 'description' | 'id' | 'name' | 'parent' | 'parentID' | LocationKeySpecifier)[];
+export type LocationKeySpecifier = ('children' | 'deletedAt' | 'description' | 'id' | 'name' | 'parent' | 'parentID' | 'stats' | LocationKeySpecifier)[];
 export type LocationFieldPolicy = {
 	children?: FieldPolicy<any> | FieldReadFunction<any>,
 	deletedAt?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -38,7 +38,8 @@ export type LocationFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>,
 	parent?: FieldPolicy<any> | FieldReadFunction<any>,
-	parentID?: FieldPolicy<any> | FieldReadFunction<any>
+	parentID?: FieldPolicy<any> | FieldReadFunction<any>,
+	stats?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type LocationConnectionKeySpecifier = ('edges' | 'pageInfo' | 'totalCount' | LocationConnectionKeySpecifier)[];
 export type LocationConnectionFieldPolicy = {
@@ -50,6 +51,12 @@ export type LocationEdgeKeySpecifier = ('cursor' | 'node' | LocationEdgeKeySpeci
 export type LocationEdgeFieldPolicy = {
 	cursor?: FieldPolicy<any> | FieldReadFunction<any>,
 	node?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LocationStatsKeySpecifier = ('totalItems' | 'totalLocations' | 'totalValue' | LocationStatsKeySpecifier)[];
+export type LocationStatsFieldPolicy = {
+	totalItems?: FieldPolicy<any> | FieldReadFunction<any>,
+	totalLocations?: FieldPolicy<any> | FieldReadFunction<any>,
+	totalValue?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type MutationKeySpecifier = ('createAsset' | 'createLocation' | 'createTag' | 'createUser' | 'deleteLocation' | 'updateAsset' | 'updateLocation' | 'updateTag' | 'updateUser' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
@@ -148,6 +155,10 @@ export type StrictTypedTypePolicies = {
 	LocationEdge?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | LocationEdgeKeySpecifier | (() => undefined | LocationEdgeKeySpecifier),
 		fields?: LocationEdgeFieldPolicy,
+	},
+	LocationStats?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LocationStatsKeySpecifier | (() => undefined | LocationStatsKeySpecifier),
+		fields?: LocationStatsFieldPolicy,
 	},
 	Mutation?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | MutationKeySpecifier | (() => undefined | MutationKeySpecifier),

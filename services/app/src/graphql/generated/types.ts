@@ -199,6 +199,7 @@ export type Location = Node & {
   name?: Maybe<Scalars['String']>;
   parent?: Maybe<Location>;
   parentID?: Maybe<Scalars['ID']>;
+  stats?: Maybe<LocationStats>;
 };
 
 /** A connection to a list of items. */
@@ -219,6 +220,13 @@ export type LocationEdge = {
   cursor: Scalars['Cursor'];
   /** The item at the end of the edge. */
   node?: Maybe<Location>;
+};
+
+export type LocationStats = {
+  __typename?: 'LocationStats';
+  totalItems?: Maybe<Scalars['Int']>;
+  totalLocations?: Maybe<Scalars['Int']>;
+  totalValue?: Maybe<Scalars['Int']>;
 };
 
 /**

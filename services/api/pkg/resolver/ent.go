@@ -43,7 +43,11 @@ func (r *queryResolver) Users(ctx context.Context, after *entgql.Cursor[uuid.UUI
 	return r.client.User.Query().Paginate(ctx, after, first, before, last, ent.WithUserFilter(where.Filter))
 }
 
+// Location returns generated.LocationResolver implementation.
+func (r *Resolver) Location() generated.LocationResolver { return &locationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type locationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

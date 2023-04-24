@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"things-api/ent"
 	"things-api/ent/schema/uuidgql"
+	"things-api/pkg/model"
 	"time"
 
 	"entgo.io/contrib/entgql"
@@ -40,6 +41,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Location() LocationResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -87,6 +89,7 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Parent      func(childComplexity int) int
 		ParentID    func(childComplexity int) int
+		Stats       func(childComplexity int) int
 	}
 
 	LocationConnection struct {
@@ -98,6 +101,12 @@ type ComplexityRoot struct {
 	LocationEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	LocationStats struct {
+		TotalItems     func(childComplexity int) int
+		TotalLocations func(childComplexity int) int
+		TotalValue     func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -166,6 +175,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type LocationResolver interface {
+	Stats(ctx context.Context, obj *ent.Location) (*model.LocationStats, error)
+}
 type MutationResolver interface {
 	CreateAsset(ctx context.Context, input ent.CreateAssetInput) (*ent.Asset, error)
 	UpdateAsset(ctx context.Context, id uuid.UUID, input ent.UpdateAssetInput) (*ent.Asset, error)
@@ -383,6 +395,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Location.ParentID(childComplexity), true
 
+	case "Location.stats":
+		if e.complexity.Location.Stats == nil {
+			break
+		}
+
+		return e.complexity.Location.Stats(childComplexity), true
+
 	case "LocationConnection.edges":
 		if e.complexity.LocationConnection.Edges == nil {
 			break
@@ -417,6 +436,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LocationEdge.Node(childComplexity), true
+
+	case "LocationStats.totalItems":
+		if e.complexity.LocationStats.TotalItems == nil {
+			break
+		}
+
+		return e.complexity.LocationStats.TotalItems(childComplexity), true
+
+	case "LocationStats.totalLocations":
+		if e.complexity.LocationStats.TotalLocations == nil {
+			break
+		}
+
+		return e.complexity.LocationStats.TotalLocations(childComplexity), true
+
+	case "LocationStats.totalValue":
+		if e.complexity.LocationStats.TotalValue == nil {
+			break
+		}
+
+		return e.complexity.LocationStats.TotalValue(childComplexity), true
 
 	case "Mutation.createAsset":
 		if e.complexity.Mutation.CreateAsset == nil {
@@ -1404,7 +1444,17 @@ input UserWhereInput {
   hasChildrenWith: [UserWhereInput!]
 }
 `, BuiltIn: false},
-	{Name: "../location.graphqls", Input: `extend type Mutation {
+	{Name: "../location.graphqls", Input: `type LocationStats {
+  totalLocations: Int
+  totalItems: Int
+  totalValue: Int
+}
+
+extend type Location {
+  stats: LocationStats
+}
+
+extend type Mutation {
   createLocation(input: CreateLocationInput!): Location!
   updateLocation(id: ID!, input: UpdateLocationInput!): Location!
   deleteLocation(id: ID!): Boolean!
@@ -2224,6 +2274,8 @@ func (ec *executionContext) fieldContext_Asset_location(ctx context.Context, fie
 				return ec.fieldContext_Location_parent(ctx, field)
 			case "children":
 				return ec.fieldContext_Location_children(ctx, field)
+			case "stats":
+				return ec.fieldContext_Location_stats(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -3093,6 +3145,8 @@ func (ec *executionContext) fieldContext_Location_parent(ctx context.Context, fi
 				return ec.fieldContext_Location_parent(ctx, field)
 			case "children":
 				return ec.fieldContext_Location_children(ctx, field)
+			case "stats":
+				return ec.fieldContext_Location_stats(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -3150,8 +3204,59 @@ func (ec *executionContext) fieldContext_Location_children(ctx context.Context, 
 				return ec.fieldContext_Location_parent(ctx, field)
 			case "children":
 				return ec.fieldContext_Location_children(ctx, field)
+			case "stats":
+				return ec.fieldContext_Location_stats(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Location_stats(ctx context.Context, field graphql.CollectedField, obj *ent.Location) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Location_stats(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Location().Stats(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.LocationStats)
+	fc.Result = res
+	return ec.marshalOLocationStats2ᚖthingsᚑapiᚋpkgᚋmodelᚐLocationStats(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Location_stats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Location",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalLocations":
+				return ec.fieldContext_LocationStats_totalLocations(ctx, field)
+			case "totalItems":
+				return ec.fieldContext_LocationStats_totalItems(ctx, field)
+			case "totalValue":
+				return ec.fieldContext_LocationStats_totalValue(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LocationStats", field.Name)
 		},
 	}
 	return fc, nil
@@ -3352,6 +3457,8 @@ func (ec *executionContext) fieldContext_LocationEdge_node(ctx context.Context, 
 				return ec.fieldContext_Location_parent(ctx, field)
 			case "children":
 				return ec.fieldContext_Location_children(ctx, field)
+			case "stats":
+				return ec.fieldContext_Location_stats(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -3398,6 +3505,129 @@ func (ec *executionContext) fieldContext_LocationEdge_cursor(ctx context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LocationStats_totalLocations(ctx context.Context, field graphql.CollectedField, obj *model.LocationStats) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LocationStats_totalLocations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalLocations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LocationStats_totalLocations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LocationStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LocationStats_totalItems(ctx context.Context, field graphql.CollectedField, obj *model.LocationStats) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LocationStats_totalItems(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalItems, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LocationStats_totalItems(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LocationStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LocationStats_totalValue(ctx context.Context, field graphql.CollectedField, obj *model.LocationStats) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LocationStats_totalValue(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalValue, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LocationStats_totalValue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LocationStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3606,6 +3836,8 @@ func (ec *executionContext) fieldContext_Mutation_createLocation(ctx context.Con
 				return ec.fieldContext_Location_parent(ctx, field)
 			case "children":
 				return ec.fieldContext_Location_children(ctx, field)
+			case "stats":
+				return ec.fieldContext_Location_stats(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -3677,6 +3909,8 @@ func (ec *executionContext) fieldContext_Mutation_updateLocation(ctx context.Con
 				return ec.fieldContext_Location_parent(ctx, field)
 			case "children":
 				return ec.fieldContext_Location_children(ctx, field)
+			case "stats":
+				return ec.fieldContext_Location_stats(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -9893,6 +10127,23 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 				return innerFunc(ctx)
 
 			})
+		case "stats":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Location_stats(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9964,6 +10215,39 @@ func (ec *executionContext) _LocationEdge(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var locationStatsImplementors = []string{"LocationStats"}
+
+func (ec *executionContext) _LocationStats(ctx context.Context, sel ast.SelectionSet, obj *model.LocationStats) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, locationStatsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LocationStats")
+		case "totalLocations":
+
+			out.Values[i] = ec._LocationStats_totalLocations(ctx, field, obj)
+
+		case "totalItems":
+
+			out.Values[i] = ec._LocationStats_totalItems(ctx, field, obj)
+
+		case "totalValue":
+
+			out.Values[i] = ec._LocationStats_totalValue(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11812,6 +12096,16 @@ func (ec *executionContext) marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ct
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -11928,6 +12222,13 @@ func (ec *executionContext) marshalOLocationEdge2ᚖthingsᚑapiᚋentᚐLocatio
 		return graphql.Null
 	}
 	return ec._LocationEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOLocationStats2ᚖthingsᚑapiᚋpkgᚋmodelᚐLocationStats(ctx context.Context, sel ast.SelectionSet, v *model.LocationStats) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._LocationStats(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOLocationWhereInput2ᚕᚖthingsᚑapiᚋentᚐLocationWhereInputᚄ(ctx context.Context, v interface{}) ([]*ent.LocationWhereInput, error) {

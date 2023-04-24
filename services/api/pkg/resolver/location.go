@@ -7,10 +7,68 @@ package resolver
 import (
 	"context"
 	"things-api/ent"
+	"things-api/ent/asset"
 	"things-api/ent/location"
+	"things-api/pkg/model"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 )
+
+// Stats is the resolver for the stats field.
+func (r *locationResolver) Stats(ctx context.Context, obj *ent.Location) (*model.LocationStats, error) {
+	var getAllLocationIDs func(location *ent.Location, ids []uuid.UUID) []uuid.UUID
+
+	getAllLocationIDs = func(location *ent.Location, ids []uuid.UUID) []uuid.UUID {
+		if !slices.Contains(ids, location.ID) {
+			ids = append(ids, location.ID)
+		}
+
+		if len(location.Edges.Children) > 0 {
+			for _, child := range location.Edges.Children {
+				ids = getAllLocationIDs(child, ids)
+			}
+		}
+
+		return ids
+	}
+
+	location, err := r.client.Location.Query().
+		Where(location.ID(obj.ID)).
+		WithChildren(func(q *ent.LocationQuery) {
+			q.WithChildren(func(q *ent.LocationQuery) {
+				q.WithChildren(func(q *ent.LocationQuery) {
+					q.WithChildren(func(q *ent.LocationQuery) {})
+				})
+			})
+		}).
+		Only(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	locationIDs := getAllLocationIDs(location, []uuid.UUID{})
+
+	var stats []struct{ Count int }
+
+	err = r.client.Asset.Query().
+		Where(asset.LocationIDIn(locationIDs...)).
+		Aggregate(
+			ent.Count(),
+		).
+		Scan(ctx, &stats)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.LocationStats{
+		TotalLocations: int64(len(locationIDs) - 1),
+		TotalItems:     int64(stats[0].Count),
+		TotalValue:     int64(0),
+	}, err
+}
 
 // CreateLocation is the resolver for the createLocation field.
 func (r *mutationResolver) CreateLocation(ctx context.Context, input ent.CreateLocationInput) (*ent.Location, error) {

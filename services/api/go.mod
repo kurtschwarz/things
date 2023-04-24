@@ -30,7 +30,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.0.0-beta.9 // indirect
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
-	golang.org/x/exp v0.0.0-20221230185412-738e83a70c30 // indirect
+	golang.org/x/exp v0.0.0-20221230185412-738e83a70c30
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

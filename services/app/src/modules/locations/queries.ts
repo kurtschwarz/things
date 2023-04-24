@@ -9,19 +9,46 @@ export const GET_ALL_LOCATIONS = gql`
           name
           description
           parentID
+
+          stats {
+            totalLocations
+            totalItems
+            totalValue
+          }
+
           children {
             id
             name
             description
-            children {
-              id
-              name
-              description
+
+            stats {
+              totalLocations
+              totalItems
+              totalValue
             }
+
             children {
               id
               name
               description
+
+              stats {
+                totalLocations
+                totalItems
+                totalValue
+              }
+
+              children {
+                id
+                name
+                description
+
+                stats {
+                  totalLocations
+                  totalItems
+                  totalValue
+                }
+              }
             }
           }
         }
@@ -38,18 +65,22 @@ export const GET_ALL_LOCATION_PARENTS_RECURSIVE = gql`
           id
           name
           parentID
+
           parent {
             id
             name
             parentID
+
             parent {
               id
               name
               parentID
+
               parent {
                 id
                 name
                 parentID
+
                 parent {
                   id
                   name

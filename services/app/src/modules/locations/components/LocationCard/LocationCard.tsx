@@ -1,6 +1,7 @@
-import { Card, Image, Text, Group, Button, ActionIcon } from '@mantine/core'
+import { createStyles, rem, Card, Image, Text } from '@mantine/core'
 
 import { Location } from '@/graphql'
+import { LocationCardStats } from './LocationCardStats'
 
 type LocationCardProps = {
   location: Location
@@ -32,6 +33,8 @@ export const LocationCard = (props: LocationCardProps) => {
       {/* <Group mt='md'>
         <Text fz='xs' opacity={0.45}>{edge.node?.name} → {child.name}</Text>
       </Group> */}
+
+      <LocationCardStats location={props.location} />
     </Card>
   )
 }

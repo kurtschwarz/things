@@ -1,3 +1,13 @@
+type LocationStats {
+  totalLocations: Int
+  totalItems: Int
+  totalValue: Int
+}
+
+extend type Location {
+  stats: LocationStats
+}
+
 extend type Mutation {
   createLocation(input: CreateLocationInput!): Location!
   updateLocation(id: ID!, input: UpdateLocationInput!): Location!

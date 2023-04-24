@@ -13,6 +13,7 @@ resolver:
 
 autobind:
   - things-api/ent
+  - things-api/pkg/model
 
 models:
   ID:
@@ -21,3 +22,8 @@ models:
   Node:
     model:
       - things-api/ent.Noder
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
