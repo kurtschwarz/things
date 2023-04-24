@@ -1,6 +1,6 @@
 import { modals } from '@mantine/modals'
 
-import type { Location } from '@/graphql/types'
+import type { Location } from '@/graphql'
 import { LOCATION_MUTATION_MODAL } from '@/modules/modals'
 
 export const openCreateLocationMutationModal = (options?: { onCompleted?: () => void }) =>

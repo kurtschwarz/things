@@ -14,4 +14,5 @@ run *SERVICES:
   {{compose}} up {{SERVICES}}
 
 codegen:
-  cd services/api && go generate .
+  (cd services/api && go generate .)
+  (cd services/app && npm run codegen)

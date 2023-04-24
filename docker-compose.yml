@@ -9,6 +9,7 @@ services:
     image: things/app:latest
     volumes:
       - ./services/app/:/things/services/app/
+      - ./services/api/graph/:/things/services/api/graph/
     ports:
       - 127.0.0.1:3000:3000/tcp
     networks:

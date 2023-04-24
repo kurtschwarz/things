@@ -1,16 +1,18 @@
 import { useQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 
-import { Location } from '@/graphql/types'
+import type { Location } from '@/graphql'
+
 import { GET_ALL_LOCATION_PARENTS_RECURSIVE } from '../../queries'
 
-export const useLocationSelectLogic = () => {
-  const [value, setValue] = useState('')
-  const [data, setData] = useState<{ value: string, label: string, description: string }[]>([])
-  const { data: allLocations, loading } = useQuery(GET_ALL_LOCATION_PARENTS_RECURSIVE, {})
+type LocationSelectOption = { value: string, label: string, hierarchy: string }
 
-  const buildLocationHierarchy = (location: Location, hierarchy: string = ''): string => {
-    if (location.parent) {
+export const useLocationSelectLogic = () => {
+  const [options, setOptions] = useState<LocationSelectOption[]>([])
+  const { data, loading } = useQuery(GET_ALL_LOCATION_PARENTS_RECURSIVE, {})
+
+  const buildLocationHierarchy = (location: Location | null | undefined, hierarchy: string = ''): string => {
+    if (location?.parent) {
       return buildLocationHierarchy(location.parent, `${location.parent.name} → ${hierarchy}`)
     }
 
@@ -18,23 +20,23 @@ export const useLocationSelectLogic = () => {
   }
 
   useEffect(() => {
-    if (allLocations) {
-      setData(
-        allLocations?.locations?.edges?.map(({ node: location }) => ({
-          value: location.id,
-          label: location.name,
-          hierarchy: buildLocationHierarchy(location, location.name)
-        }))
+    if (data && data.locations) {
+      setOptions(
+        (data.locations.edges ?? [])
+          .map<LocationSelectOption>((edge) => ({
+            value: edge!.node!.id,
+            label: edge!.node!.name ?? edge!.node!.id,
+            hierarchy: buildLocationHierarchy(edge!.node, edge!.node?.name ?? '')
+          }))
       )
     }
   }, [
-    allLocations,
-    setData
+    options,
+    setOptions
   ])
 
   return {
-    value,
-    data,
+    options,
     loading
   }
 }

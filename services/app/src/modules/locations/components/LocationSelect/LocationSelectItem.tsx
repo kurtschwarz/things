@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { Group, Avatar, Text } from '@mantine/core'
+import { Text } from '@mantine/core'
 
 type LocationSelectItemProps = React.ComponentPropsWithoutRef<'div'> & {
   label: string

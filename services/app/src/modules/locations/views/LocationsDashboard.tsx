@@ -1,11 +1,10 @@
 import { createStyles, Button, Text, Header } from '@mantine/core'
 import { useLoaderData, useRevalidator } from 'react-router'
 
-import { client } from '@/graphql/client'
-import { Location } from '@/graphql/types'
+import { client } from '@/graphql'
 
 import { GET_ALL_LOCATIONS } from '../queries'
-import { openCreateLocationMutationModal, openUpdateLocationMutationModal } from '../helpers'
+import { openCreateLocationMutationModal } from '../helpers'
 import LocationsGrid from '../components/LocationsGrid/LocationsGrid'
 
 const useStyles = createStyles((theme) => ({
@@ -19,7 +18,7 @@ export const locationsDashboardLoader = async () =>
 
 export const LocationsDashboard = () => {
   const { classes } = useStyles()
-  const { data } = useLoaderData() as { data: { locations: { edges: { node: Location }[] } } }
+  const { data } = useLoaderData() as Awaited<ReturnType<typeof locationsDashboardLoader>>
   const revalidator = useRevalidator()
 
   return (
@@ -39,7 +38,7 @@ export const LocationsDashboard = () => {
         </div>
       </Header>
 
-      <LocationsGrid locations={data.locations?.edges} />
+      <LocationsGrid locations={data.locations} />
     </div>
   )
 }

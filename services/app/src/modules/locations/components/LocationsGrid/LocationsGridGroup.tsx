@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { BiChevronUp, BiChevronDown } from 'react-icons/bi'
 
 export type LocationsGridGroupProps = {
-  name?: string
+  name?: string | null
   divider?: boolean
   children: React.ReactNode
 }
@@ -13,7 +13,7 @@ const useStyles = createStyles((theme) => ({
     width: '100%',
     userSelect: 'none',
     cursor: 'pointer'
-  },
+  }
 }))
 
 export const LocationsGridGroup = (props: LocationsGridGroupProps) => {

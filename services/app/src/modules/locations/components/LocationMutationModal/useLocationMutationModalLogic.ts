@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form'
 import type { ContextModalProps } from '@mantine/modals/lib/context'
 
-import { Location } from '@/graphql/types'
+import type { Location } from '@/graphql'
 import { GET_ALL_LOCATIONS, useLocationMutations } from '@/modules/locations'
 
 export const useLocationMutationModalLogic = (

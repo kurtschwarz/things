@@ -1,27 +1,27 @@
 import { Grid, Card, Image, Text, Stack, Group, Button, ActionIcon } from '@mantine/core'
 import { BiStar } from 'react-icons/bi'
 
-import { Location } from '@/graphql/types'
+import { LocationConnection, LocationEdge } from '@/graphql'
 
 import { LocationsGridGroup } from './LocationsGridGroup'
 
 type LocationsGridProps = {
-  locations: { node: Location }[]
+  locations: LocationConnection
 }
 
 export const LocationsGrid = (props: LocationsGridProps) => {
-  const rootLocationsWithChildren = props.locations
-    .filter(({ node: location }) => location.parentID == null && location.children?.length > 0)
-    .sort((a, b) => b.node.children?.length - a.node.children?.length) as LocationsGridProps['locations']
+  const rootLocationsWithChildren = (props.locations.edges || [])
+    .filter((edge) => edge?.node?.parentID == null && (edge?.node?.children?.length || 0) > 0)
+    .sort((a, b) => (b?.node?.children?.length || 0) - (a?.node?.children?.length || 0))
 
-  const rootLocationsWithoutChildren = props.locations
-    .filter(({ node: location }) => location.parentID == null && location.children?.length < 1) as LocationsGridProps['locations']
+  const rootLocationsWithoutChildren = (props.locations.edges || [])
+    .filter((edge) => edge?.node?.parentID == null && (edge?.node?.children?.length || 0) < 1)
 
   return (
     <Stack spacing='xl'>
-      {rootLocationsWithChildren.map(({ node: rootLocation }, index) => (
+      {rootLocationsWithChildren.map((edge, index) => (
         <LocationsGridGroup
-          name={rootLocation.name}
+          name={edge?.node?.name}
           divider={index > 0}
         >
           <Grid>
@@ -35,8 +35,8 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                   />
                 </Card.Section>
 
-                <Text weight={800} size='lg' mt='lg'>{rootLocation.name}</Text>
-                <Text size='sm' italic={!rootLocation.description}>{rootLocation.description || 'No description provided.'}</Text>
+                <Text weight={800} size='lg' mt='lg'>{edge?.node?.name}</Text>
+                <Text size='sm' italic={!edge?.node?.description}>{edge?.node?.description || 'No description provided.'}</Text>
 
                 <Group mt='xs'>
                   <Button radius='md' style={{ flex: 1 }}>
@@ -51,13 +51,13 @@ export const LocationsGrid = (props: LocationsGridProps) => {
 
             <Grid.Col span={8}>
               <Grid>
-                {rootLocation.children.map((childLocation) => (
+                {edge?.node?.children?.map((child) => (
                   <Grid.Col span={4}>
                     <Card shadow='sm' padding='lg' radius='sm' withBorder>
-                      <Text weight={800} size='lg'>{childLocation.name}</Text>
-                      <Text size='sm' italic={!childLocation.description}>{childLocation.description || 'No description provided.'}</Text>
+                      <Text weight={800} size='lg'>{child.name}</Text>
+                      <Text size='sm' italic={!child.description}>{child.description || 'No description provided.'}</Text>
                       <Group mt='md'>
-                        <Text fz='xs' opacity={0.45}>{rootLocation.name} → {childLocation.name}</Text>
+                        <Text fz='xs' opacity={0.45}>{edge.node?.name} → {child.name}</Text>
                       </Group>
                     </Card>
                   </Grid.Col>
@@ -72,7 +72,7 @@ export const LocationsGrid = (props: LocationsGridProps) => {
         name={'All Other Locations'}
         divider={rootLocationsWithChildren.length > 0}
       >
-        {rootLocationsWithoutChildren.map(({ node: location }) => (
+        {rootLocationsWithoutChildren?.map((edge) => (
           <Grid>
             <Grid.Col span={4}>
               <Card shadow='sm' padding='lg' radius='sm' withBorder>
@@ -84,8 +84,8 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                   />
                 </Card.Section>
 
-                <Text weight={800} size='lg' mt='lg'>{location.name}</Text>
-                <Text size='sm' italic={!location.description}>{location.description || 'No description provided.'}</Text>
+                <Text weight={800} size='lg' mt='lg'>{edge?.node?.name}</Text>
+                <Text size='sm' italic={!edge?.node?.description}>{edge?.node?.description || 'No description provided.'}</Text>
               </Card>
             </Grid.Col>
           </Grid>

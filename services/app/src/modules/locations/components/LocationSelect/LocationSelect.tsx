@@ -6,12 +6,11 @@ import { LocationSelectItem } from './LocationSelectItem'
 export type LocationSelectProps = Pick<SelectProps, 'mt' | 'label' | 'classNames'>
 
 export const LocationSelect = (props: LocationSelectProps) => {
-  const { value, data } = useLocationSelectLogic()
+  const { options } = useLocationSelectLogic()
 
   return (
     <Select
-      value={value}
-      data={data}
+      data={options}
       itemComponent={LocationSelectItem}
       dropdownPosition='bottom'
       searchable

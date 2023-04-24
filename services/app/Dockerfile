@@ -17,6 +17,7 @@ FROM base AS dev
 WORKDIR /things/services/app
 
 COPY --from=dependencies /things/services/app/node_modules/ /things/node_modules/
+COPY --chown=node:node ./services/api/graph/ ./services/api/graph/
 COPY --chown=node:node ./services/app/ /things/services/app/
 
 ENTRYPOINT [ "npm" ]

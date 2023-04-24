@@ -1,7 +1,7 @@
 import { createStyles, rem, TextInput, Textarea, Button, Group } from '@mantine/core'
 import { ContextModalProps } from '@mantine/modals'
 
-import type { Location } from '@/graphql/types'
+import type { Location } from '@/graphql'
 
 import { useLocationMutationModalLogic } from './useLocationMutationModalLogic'
 import { LocationSelect } from '../LocationSelect/LocationSelect'
