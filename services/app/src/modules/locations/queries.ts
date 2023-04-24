@@ -4,6 +4,7 @@ export const generateLocationRelationRecursive = (relation: string, depth = 5): 
   ${relation} {
     id
     name
+    description
     ${depth - 1 ? generateLocationRelationRecursive(relation, depth - 1) : ''}
   }
 `
@@ -15,6 +16,7 @@ export const GET_ALL_LOCATIONS = gql`
         node {
           id
           name
+          description
           parentID
           ${generateLocationRelationRecursive('children', 3)}
         }

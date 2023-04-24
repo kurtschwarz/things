@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { BiChevronUp, BiChevronDown } from 'react-icons/bi'
 
 export type LocationsGridGroupProps = {
-  name: string
-  divider: boolean
+  name?: string
+  divider?: boolean
   children: React.ReactNode
 }
 

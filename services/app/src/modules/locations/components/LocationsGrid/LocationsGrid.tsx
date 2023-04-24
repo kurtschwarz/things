@@ -1,19 +1,21 @@
 import { Grid, Card, Image, Text, Stack, Group, Button, ActionIcon } from '@mantine/core'
 import { BiStar } from 'react-icons/bi'
 
+import { Location } from '@/graphql/types'
+
 import { LocationsGridGroup } from './LocationsGridGroup'
 
 type LocationsGridProps = {
-  locations: any[]
+  locations: { node: Location }[]
 }
 
 export const LocationsGrid = (props: LocationsGridProps) => {
   const rootLocationsWithChildren = props.locations
     .filter(({ node: location }) => location.parentID == null && location.children?.length > 0)
-    .sort((a, b) => b.node.children?.length - a.node.children?.length)
+    .sort((a, b) => b.node.children?.length - a.node.children?.length) as LocationsGridProps['locations']
 
   const rootLocationsWithoutChildren = props.locations
-    .filter(({ node: location }) => location.parentID == null && location.children?.length < 1)
+    .filter(({ node: location }) => location.parentID == null && location.children?.length < 1) as LocationsGridProps['locations']
 
   return (
     <Stack spacing='xl'>
@@ -34,7 +36,7 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                 </Card.Section>
 
                 <Text weight={800} size='lg' mt='lg'>{rootLocation.name}</Text>
-                <Text size='sm'>Description of location appears here</Text>
+                <Text size='sm' italic={!rootLocation.description}>{rootLocation.description || 'No description provided.'}</Text>
 
                 <Group mt='xs'>
                   <Button radius='md' style={{ flex: 1 }}>
@@ -53,7 +55,7 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                   <Grid.Col span={4}>
                     <Card shadow='sm' padding='lg' radius='sm' withBorder>
                       <Text weight={800} size='lg'>{childLocation.name}</Text>
-                      <Text size='sm'>Description of location appears here</Text>
+                      <Text size='sm' italic={!childLocation.description}>{childLocation.description || 'No description provided.'}</Text>
                       <Group mt='md'>
                         <Text fz='xs' opacity={0.45}>{rootLocation.name} → {childLocation.name}</Text>
                       </Group>
@@ -83,7 +85,7 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                 </Card.Section>
 
                 <Text weight={800} size='lg' mt='lg'>{location.name}</Text>
-                <Text fz='sm'>Description of location appears here</Text>
+                <Text size='sm' italic={!location.description}>{location.description || 'No description provided.'}</Text>
               </Card>
             </Grid.Col>
           </Grid>

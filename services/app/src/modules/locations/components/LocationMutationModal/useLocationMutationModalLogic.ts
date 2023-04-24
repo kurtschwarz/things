@@ -46,7 +46,7 @@ export const useLocationMutationModalLogic = (
           input: {
             name: values.name,
             parentID: values.parentID,
-            // description: values.description
+            description: values.description
           }
         },
         refetchQueries: [
@@ -64,7 +64,7 @@ export const useLocationMutationModalLogic = (
         input: {
           name: values.name,
           parentID: values.parentID,
-          // description: values.description
+          description: values.description
         }
       },
       refetchQueries: [
