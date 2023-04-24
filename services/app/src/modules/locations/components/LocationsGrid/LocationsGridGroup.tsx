@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Text, createStyles } from '@mantine/core'
+import { ActionIcon, Box, Group, Text, createStyles } from '@mantine/core'
 import { useState } from 'react'
 import { BiChevronUp, BiChevronDown } from 'react-icons/bi'
 
@@ -28,7 +28,7 @@ export const LocationsGridGroup = (props: LocationsGridGroupProps) => {
   }
 
   return (
-    <div>
+    <Box mb={visible ? 'lg' : undefined}>
       <Group
         pb={visible ? 'md' : undefined}
         pt={props.divider ? 'sm' : undefined}
@@ -44,6 +44,6 @@ export const LocationsGridGroup = (props: LocationsGridGroupProps) => {
       </Group>
 
       {visible ? props.children : null}
-    </div>
+    </Box>
   )
 }

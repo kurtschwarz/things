@@ -18,7 +18,7 @@ export const LocationsGrid = (props: LocationsGridProps) => {
     .filter((edge) => edge?.node?.parentID == null && (edge?.node?.children?.length || 0) < 1)
 
   return (
-    <Stack spacing='xl'>
+    <Stack spacing='xs'>
       {rootLocationsWithChildren.map((edge, index) => (
         <LocationsGridGroup
           name={edge?.node?.name}
