@@ -1,5 +1,5 @@
 import { createStyles, rem, Card, Image, Text, Button, Group, ActionIcon } from '@mantine/core'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useRevalidator } from 'react-router-dom'
 
 import { Location } from '@/graphql'
 
@@ -27,6 +27,7 @@ const useStyles = createStyles((theme) => ({
 export const LocationCard = (props: LocationCardProps) => {
   const { classes } = useStyles()
   const navigate = useNavigate()
+  const revalidator = useRevalidator()
 
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -38,7 +39,11 @@ export const LocationCard = (props: LocationCardProps) => {
     event.preventDefault()
     event.stopPropagation()
 
-    openUpdateLocationMutationModal(props.location)
+    openUpdateLocationMutationModal(props.location, {
+      onCompleted() {
+        revalidator.revalidate()
+      },
+    })
   }
 
   const handleStarClick = (event: React.MouseEvent<HTMLButtonElement>) => {
