@@ -1,7 +1,9 @@
-import { Card, Image, Text, createStyles } from '@mantine/core'
+import { createStyles, rem, Card, Image, Text, Button } from '@mantine/core'
 import { useNavigate } from 'react-router-dom'
 
 import { Location } from '@/graphql'
+
+import { openUpdateLocationMutationModal } from '../../../helpers'
 import { LocationCardStats } from './LocationCardStats'
 
 type LocationCardProps = {
@@ -12,6 +14,12 @@ type LocationCardProps = {
 const useStyles = createStyles((theme) => ({
   root: {
     cursor: 'pointer'
+  },
+
+  editButton: {
+    top: rem(18),
+    right: rem(18),
+    position: 'absolute'
   }
 }))
 
@@ -19,20 +27,30 @@ export const LocationCard = (props: LocationCardProps) => {
   const { classes } = useStyles()
   const navigate = useNavigate()
 
-  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault()
+
     navigate(`/location/${props.location.id}`)
   }
 
+  const handleEditClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    openUpdateLocationMutationModal(props.location)
+  }
+
   return (
-    <Card shadow='sm' padding='lg' radius='sm' withBorder className={classes.root} onClick={handleClick}>
+    <Card shadow='sm' padding='lg' radius='sm' withBorder className={classes.root} onClick={handleCardClick}>
       {!props.compact ? (
-        <Card.Section>
+        <Card.Section style={{ position: 'relative' }}>
           <Image
             src='https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80'
             height={160}
             alt='Norway'
           />
+
+          <Button variant="white" color="dark" className={classes.editButton} onClick={handleEditClick}>Edit</Button>
         </Card.Section>
       ) : null}
 
