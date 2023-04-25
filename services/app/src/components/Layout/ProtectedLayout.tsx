@@ -1,7 +1,7 @@
 import { AppShell } from '@mantine/core'
 import { useOutlet } from 'react-router'
 
-import { Sidebar } from '../Sidebar/Sidebar'
+import { GlobalSidebar } from '@/containers/GlobalSidebar'
 
 export const ProtectedLayout = () => {
   const outlet = useOutlet()
@@ -9,7 +9,7 @@ export const ProtectedLayout = () => {
   return (
     <AppShell
       layout='alt'
-      navbar={<Sidebar />}
+      navbar={<GlobalSidebar />}
       styles={(theme) => ({
         main: {
           backgroundColor: theme.colors.gray[0]

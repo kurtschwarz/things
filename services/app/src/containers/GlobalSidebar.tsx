@@ -26,9 +26,10 @@ const useStyles = createStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     textDecoration: 'none',
-    fontSize: theme.fontSizes.sm,
+    fontSize: theme.fontSizes.md,
     color: theme.colorScheme === 'dark' ? theme.colors.dark[1] : theme.colors.gray[7],
     padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+    marginBottom: rem(3),
     borderRadius: theme.radius.sm,
     fontWeight: 500,
 
@@ -75,15 +76,10 @@ const navItems = [
     icon: BiLabel,
     label: 'Tags',
     link: '/tags'
-  },
-  {
-    icon: BiCog,
-    label: 'Settings',
-    link: '/settings'
   }
 ]
 
-export const Sidebar = () => {
+export const GlobalSidebar = () => {
   const { classes, cx } = useStyles()
   const location = useLocation()
 
@@ -113,6 +109,13 @@ export const Sidebar = () => {
 
       <Navbar.Section grow>
         {navLinks}
+      </Navbar.Section>
+
+      <Navbar.Section>
+        <Link to='/settings' className={classes.link}>
+          <BiCog className={classes.linkIcon} />
+          <span>Settings</span>
+        </Link>
       </Navbar.Section>
     </Navbar>
   )
