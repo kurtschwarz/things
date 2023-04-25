@@ -12,7 +12,7 @@ export const ProtectedLayout = () => {
       navbar={<GlobalSidebar />}
       styles={(theme) => ({
         main: {
-          backgroundColor: theme.colors.gray[0]
+          backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[7] :  theme.colors.gray[0] 
         }
       })}
     >
