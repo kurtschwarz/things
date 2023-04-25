@@ -1,10 +1,11 @@
-import { createStyles, rem, Card, Image, Text, Button } from '@mantine/core'
+import { createStyles, rem, Card, Image, Text, Button, Group, ActionIcon } from '@mantine/core'
 import { useNavigate } from 'react-router-dom'
 
 import { Location } from '@/graphql'
 
 import { openUpdateLocationMutationModal } from '../../../helpers'
 import { LocationCardStats } from './LocationCardStats'
+import { BiStar } from 'react-icons/bi'
 
 type LocationCardProps = {
   location: Location
@@ -16,7 +17,7 @@ const useStyles = createStyles((theme) => ({
     cursor: 'pointer'
   },
 
-  editButton: {
+  imageButtons: {
     top: rem(18),
     right: rem(18),
     position: 'absolute'
@@ -40,6 +41,11 @@ export const LocationCard = (props: LocationCardProps) => {
     openUpdateLocationMutationModal(props.location)
   }
 
+  const handleStarClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   return (
     <Card shadow='sm' padding='lg' radius='sm' withBorder className={classes.root} onClick={handleCardClick}>
       {!props.compact ? (
@@ -50,7 +56,13 @@ export const LocationCard = (props: LocationCardProps) => {
             alt='Norway'
           />
 
-          <Button variant="white" color="dark" className={classes.editButton} onClick={handleEditClick}>Edit</Button>
+          <Group className={classes.imageButtons} spacing='xs'>
+            <ActionIcon variant='default' size='lg' onClick={handleStarClick}>
+              <BiStar />
+            </ActionIcon>
+
+            <Button variant='white' color='dark' onClick={handleEditClick}>Edit</Button>
+          </Group>
         </Card.Section>
       ) : null}
 
