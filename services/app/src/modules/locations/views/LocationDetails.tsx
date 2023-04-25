@@ -2,6 +2,7 @@ import { createStyles, rem, Text, Button, Header, Group } from '@mantine/core'
 import { useLoaderData, useRevalidator } from 'react-router'
 
 import { client } from '@/graphql'
+import { ColorSchemeToggle } from '@/modules/theme'
 
 import { GET_LOCATION } from '../queries'
 import { openCreateLocationMutationModal } from '../helpers'
@@ -31,9 +32,11 @@ export const LocationDetail = () => {
   return (
     <div className={classes.root}>
       <Header height={{ base: 101 }}>
-        <Group style={{ height: 61, justifyContent: 'space-between' }} pl='md' pr='md'>
+        <Group style={{ height: 61 }} pl='md' pr='md'>
           <Text weight={600}>Locations</Text>
+
           <Button
+            style={{ marginLeft: 'auto' }}
             onClick={() => {
               openCreateLocationMutationModal({
                 onCompleted: () => revalidator.revalidate()
@@ -42,6 +45,8 @@ export const LocationDetail = () => {
           }>
             New Location
           </Button>
+
+          <ColorSchemeToggle />
         </Group>
 
         <Group className={classes.breadcrumbs} pl='md' pr='md'>
