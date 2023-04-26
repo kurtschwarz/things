@@ -3,8 +3,9 @@ import { MantineProvider, MantineThemeOverride } from '@mantine/core'
 import { ApolloProvider } from '@apollo/client'
 
 import { client } from '@/graphql/client'
-import { screens } from '@/screens'
 import { ColorSchemeProvider } from '@/modules/theme'
+
+import { router } from './Router'
 
 const theme: MantineThemeOverride = {
   primaryColor: 'teal',
@@ -18,7 +19,7 @@ export const Root = () => {
       <ColorSchemeProvider>
         {(colorScheme) => (
           <MantineProvider theme={{ ...theme, colorScheme }} withGlobalStyles withNormalizeCSS>
-            <RouterProvider router={screens} />
+            <RouterProvider router={router} />
           </MantineProvider>
         )}
       </ColorSchemeProvider>
