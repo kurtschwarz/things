@@ -7,13 +7,14 @@ import { useLocationMutations, GET_ALL_LOCATIONS } from '@/modules/locations'
 export const useLocationMutationModalLogic = (
   modal: ContextModalProps,
   location?: Location,
+  parentID?: string,
   onCompleted?: () => void
 ) => {
   const form = useForm({
     initialValues: {
       name: location?.name ?? '',
       description: location?.description ?? '',
-      parentID: location?.parentID ?? '',
+      parentID: (parentID || location?.parentID) ?? '',
     }
   })
 

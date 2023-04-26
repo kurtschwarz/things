@@ -30,9 +30,9 @@ const useStyles = createStyles((theme) => ({
   }
 }))
 
-export const LocationMutationModal = ({ context, id, innerProps }: ContextModalProps<{ location: Location, onCompleted?: () => void }>) => {
+export const LocationMutationModal = ({ context, id, innerProps }: ContextModalProps<{ location: Location, parentID?: string, onCompleted?: () => void }>) => {
   const { classes } = useStyles()
-  const { form, loading, handleCancel, handleSave, handleDelete } = useLocationMutationModalLogic({ context, id, innerProps }, innerProps.location, innerProps.onCompleted)
+  const { form, loading, handleCancel, handleSave, handleDelete } = useLocationMutationModalLogic({ context, id, innerProps }, innerProps.location, innerProps.parentID, innerProps.onCompleted)
 
   return (
     <form onSubmit={form.onSubmit((values) => handleSave(values))}>

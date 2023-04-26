@@ -1,16 +1,29 @@
-import { Grid, Card, Image, Text, Stack, Group, Button, ActionIcon, Avatar } from '@mantine/core'
-import { BiStar } from 'react-icons/bi'
+import { rem, createStyles, Grid, Card, Image, Text, Stack, Group, Button, ActionIcon, Avatar, UnstyledButton } from '@mantine/core'
+import { BiPlusCircle, BiStar } from 'react-icons/bi'
 
 import { Location, LocationConnection } from '@/graphql'
 
 import { LocationsGridGroup } from './LocationsGridGroup'
 import { LocationCard } from './LocationCard/LocationCard'
+import { openCreateLocationMutationModal } from '../../helpers'
+
+const useStyles = createStyles((theme) => ({
+  addLocationButton: {
+    width: '100%',
+    height: '100%',
+    minHeight: rem(80),
+    color: theme.colorScheme === 'dark' ? theme.colors.dark[3] : theme.colors.gray[6],
+    border: `1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.colors.gray[2]}`
+  }
+}))
 
 type LocationsGridProps = {
   locations: LocationConnection
 }
 
 export const LocationsGrid = (props: LocationsGridProps) => {
+  const { classes } = useStyles()
+
   const rootLocationsWithChildren = (props.locations.edges || [])
     .filter((edge) => edge?.node?.parentID == null && (edge?.node?.children?.length || 0) > 0)
     .sort((a, b) => (b?.node?.children?.length || 0) - (a?.node?.children?.length || 0))
@@ -39,6 +52,23 @@ export const LocationsGrid = (props: LocationsGridProps) => {
                     <LocationCard location={child} compact />
                   </Grid.Col>
                 ))}
+
+                <Grid.Col span={4}>
+                  <UnstyledButton
+                    className={classes.addLocationButton}
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                      openCreateLocationMutationModal({
+                        parentID: edge?.node?.id,
+                        onCompleted: () => {}
+                      })
+                    }}
+                  >
+                    <Group align='center' position='center'>
+                      <BiPlusCircle />
+                      Add Location
+                    </Group>
+                  </UnstyledButton>
+                </Grid.Col>
               </Grid>
             </Grid.Col>
           </Grid>

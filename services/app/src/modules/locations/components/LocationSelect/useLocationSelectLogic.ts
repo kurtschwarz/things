@@ -31,7 +31,7 @@ export const useLocationSelectLogic = () => {
       )
     }
   }, [
-    options,
+    data,
     setOptions
   ])
 
