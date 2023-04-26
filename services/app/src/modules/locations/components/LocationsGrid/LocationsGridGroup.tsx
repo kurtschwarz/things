@@ -8,16 +8,17 @@ export type LocationsGridGroupProps = {
   children: React.ReactNode
 }
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles<string, LocationsGridGroupProps>((theme, props) => ({
   root: {
     width: '100%',
     userSelect: 'none',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    borderTop: props.divider ? `1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.colors.gray[2]}` : 'none'
   }
 }))
 
 export const LocationsGridGroup = (props: LocationsGridGroupProps) => {
-  const { classes } = useStyles()
+  const { classes } = useStyles(props)
   const [visible, setVisible] = useState(true)
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -33,7 +34,6 @@ export const LocationsGridGroup = (props: LocationsGridGroupProps) => {
         pb={visible ? 'md' : undefined}
         pt={props.divider ? 'sm' : undefined}
         className={classes.root}
-        style={{ borderTop: props.divider ? '1px solid rgb(233, 236, 239)' : 'none' }}
         position='apart'
         onClick={handleClick}
       >
