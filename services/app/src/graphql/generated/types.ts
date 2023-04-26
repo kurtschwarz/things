@@ -692,7 +692,7 @@ export type GetLocationQueryVariables = Exact<{
 }>;
 
 
-export type GetLocationQuery = { __typename?: 'Query', locations: { __typename?: 'LocationConnection', edges?: Array<{ __typename?: 'LocationEdge', node?: { __typename?: 'Location', id: string, name?: string | null } | null } | null> | null } };
+export type GetLocationQuery = { __typename?: 'Query', location: { __typename?: 'Location', id: string, name?: string | null, parent?: { __typename?: 'Location', id: string, name?: string | null, parent?: { __typename?: 'Location', id: string, name?: string | null, parent?: { __typename?: 'Location', id: string, name?: string | null } | null } | null } | null } };
 
 export type GetAllLocationsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -774,11 +774,19 @@ export type CreateLocationMutationResult = Apollo.MutationResult<CreateLocationM
 export type CreateLocationMutationOptions = Apollo.BaseMutationOptions<CreateLocationMutation, CreateLocationMutationVariables>;
 export const GetLocationDocument = gql`
     query GetLocation($id: ID!) {
-  locations(where: {id: $id}) {
-    edges {
-      node {
+  location(id: $id) {
+    id
+    name
+    parent {
+      id
+      name
+      parent {
         id
         name
+        parent {
+          id
+          name
+        }
       }
     }
   }

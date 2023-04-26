@@ -24,25 +24,6 @@ export const LocationsDashboard = () => {
 
   return (
     <div className={classes.root}>
-      <Header height={{ base: 61 }}>
-        <Group style={{ height: 61 }} pl='md' pr='md'>
-          <Text weight={600}>Locations</Text>
-
-          <Button
-            style={{ marginLeft: 'auto' }}
-            onClick={() => {
-              openCreateLocationMutationModal({
-                onCompleted: () => revalidator.revalidate()
-              })
-            }
-          }>
-            New Location
-          </Button>
-
-          <ColorSchemeToggle />
-        </Group>
-      </Header>
-
       <LocationsGrid locations={data.locations} />
     </div>
   )
