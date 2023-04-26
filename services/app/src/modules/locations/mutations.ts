@@ -15,3 +15,9 @@ export const CREATE_LOCATION = gql`
     }
   }
 `
+
+export const DELETE_LOCATION = gql`
+  mutation DeleteLocation ($id: ID!) {
+    deleteLocation (id: $id)
+  }
+`

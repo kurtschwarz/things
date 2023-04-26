@@ -2,7 +2,7 @@ import { useForm } from '@mantine/form'
 import type { ContextModalProps } from '@mantine/modals/lib/context'
 
 import type { Location } from '@/graphql'
-import { GET_ALL_LOCATIONS, useLocationMutations } from '@/modules/locations'
+import { useLocationMutations, GET_ALL_LOCATIONS } from '@/modules/locations'
 
 export const useLocationMutationModalLogic = (
   modal: ContextModalProps,
@@ -21,10 +21,12 @@ export const useLocationMutationModalLogic = (
     createLocationMutation,
     createLocationMutationLoading,
     updateLocationMutation,
-    updateLocationMutationLoading
+    updateLocationMutationLoading,
+    deleteLocationMutation,
+    deleteLocationMutationLoading
   } = useLocationMutations()
 
-  const loading = createLocationMutationLoading || updateLocationMutationLoading
+  const loading = createLocationMutationLoading || updateLocationMutationLoading || deleteLocationMutationLoading
 
   const handleCancel = (event?: React.MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault()
@@ -75,10 +77,28 @@ export const useLocationMutationModalLogic = (
     })
   }
 
+  const handleDelete = async () => {
+    if (!location?.id) {
+      return
+    }
+
+    await deleteLocationMutation({
+      variables: {
+        id: location.id
+      },
+      refetchQueries: [
+        { query: GET_ALL_LOCATIONS }
+      ],
+      awaitRefetchQueries: true,
+      onCompleted: handleMutationCompleted
+    })
+  }
+
   return {
     form,
     loading,
     handleCancel,
-    handleSave
+    handleSave,
+    handleDelete
   }
 }

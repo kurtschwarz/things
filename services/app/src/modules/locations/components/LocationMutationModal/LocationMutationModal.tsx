@@ -1,4 +1,4 @@
-import { createStyles, rem, TextInput, Textarea, Button, Group } from '@mantine/core'
+import { createStyles, rem, TextInput, Textarea, Button, Group, UnstyledButton } from '@mantine/core'
 import { ContextModalProps } from '@mantine/modals'
 
 import type { Location } from '@/graphql'
@@ -32,7 +32,7 @@ const useStyles = createStyles((theme) => ({
 
 export const LocationMutationModal = ({ context, id, innerProps }: ContextModalProps<{ location: Location, onCompleted?: () => void }>) => {
   const { classes } = useStyles()
-  const { form, loading, handleCancel, handleSave } = useLocationMutationModalLogic({ context, id, innerProps }, innerProps.location, innerProps.onCompleted)
+  const { form, loading, handleCancel, handleSave, handleDelete } = useLocationMutationModalLogic({ context, id, innerProps }, innerProps.location, innerProps.onCompleted)
 
   return (
     <form onSubmit={form.onSubmit((values) => handleSave(values))}>
@@ -63,7 +63,11 @@ export const LocationMutationModal = ({ context, id, innerProps }: ContextModalP
       />
 
       <Group position='right' mt='md'>
-        <Button variant='default' onClick={handleCancel}>Cancel</Button>
+        {innerProps?.location?.id != null ? (
+          <Button variant='subtle' color='red' style={{ marginRight: 'auto' }} onClick={handleDelete} loading={loading}>Delete</Button>
+        ) : null}
+
+        <Button variant='default' onClick={handleCancel} loading={loading}>Cancel</Button>
         <Button type='submit' loading={loading}>Save Location</Button>
       </Group>
     </form>
