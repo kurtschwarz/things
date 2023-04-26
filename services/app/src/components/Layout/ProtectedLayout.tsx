@@ -1,6 +1,6 @@
 import { AppShell, createStyles } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
-import { useOutlet } from 'react-router'
+import { useLocation, useNavigation, useOutlet } from 'react-router'
 import { BiSearch } from 'react-icons/bi'
 
 import { modals, defaultModalProps } from '@/modules/modals'
@@ -16,6 +16,7 @@ const useStyles = createStyles((theme) => ({
 
 export const ProtectedLayout = () => {
   const { classes } = useStyles()
+  const location = useLocation()
   const outlet = useOutlet()
 
   return (
@@ -29,6 +30,7 @@ export const ProtectedLayout = () => {
           header={<GlobalHeader />}
           navbar={<GlobalSidebar />}
           className={classes.shell}
+          padding={location.pathname.startsWith('/location/') ? 0 : 'md'}
         >
           {outlet}
         </AppShell>
