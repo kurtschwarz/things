@@ -1,4 +1,9 @@
+extend type Query {
+  asset(id: ID!): Asset!
+}
+
 extend type Mutation {
   createAsset(input: CreateAssetInput!): Asset!
   updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+  deleteAsset(id: ID!): Boolean!
 }

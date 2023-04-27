@@ -10,17 +10,27 @@ import (
 
 // CreateAssetInput represents a mutation input for creating assets.
 type CreateAssetInput struct {
-	Name       *string
-	ParentID   *uuid.UUID
-	ChildIDs   []uuid.UUID
-	LocationID *uuid.UUID
-	TagIDs     []uuid.UUID
+	Name         string
+	Quantity     *int
+	ModelNumber  *string
+	SerialNumber *string
+	ParentID     *uuid.UUID
+	ChildIDs     []uuid.UUID
+	LocationID   uuid.UUID
+	TagIDs       []uuid.UUID
 }
 
 // Mutate applies the CreateAssetInput on the AssetMutation builder.
 func (i *CreateAssetInput) Mutate(m *AssetMutation) {
-	if v := i.Name; v != nil {
-		m.SetName(*v)
+	m.SetName(i.Name)
+	if v := i.Quantity; v != nil {
+		m.SetQuantity(*v)
+	}
+	if v := i.ModelNumber; v != nil {
+		m.SetModelNumber(*v)
+	}
+	if v := i.SerialNumber; v != nil {
+		m.SetSerialNumber(*v)
 	}
 	if v := i.ParentID; v != nil {
 		m.SetParentID(*v)
@@ -28,9 +38,7 @@ func (i *CreateAssetInput) Mutate(m *AssetMutation) {
 	if v := i.ChildIDs; len(v) > 0 {
 		m.AddChildIDs(v...)
 	}
-	if v := i.LocationID; v != nil {
-		m.SetLocationID(*v)
-	}
+	m.SetLocationID(i.LocationID)
 	if v := i.TagIDs; len(v) > 0 {
 		m.AddTagIDs(v...)
 	}
@@ -44,27 +52,42 @@ func (c *AssetCreate) SetInput(i CreateAssetInput) *AssetCreate {
 
 // UpdateAssetInput represents a mutation input for updating assets.
 type UpdateAssetInput struct {
-	ClearName      bool
-	Name           *string
-	ClearParent    bool
-	ParentID       *uuid.UUID
-	ClearChildren  bool
-	AddChildIDs    []uuid.UUID
-	RemoveChildIDs []uuid.UUID
-	ClearLocation  bool
-	LocationID     *uuid.UUID
-	ClearTags      bool
-	AddTagIDs      []uuid.UUID
-	RemoveTagIDs   []uuid.UUID
+	Name              *string
+	Quantity          *int
+	ClearModelNumber  bool
+	ModelNumber       *string
+	ClearSerialNumber bool
+	SerialNumber      *string
+	ClearParent       bool
+	ParentID          *uuid.UUID
+	ClearChildren     bool
+	AddChildIDs       []uuid.UUID
+	RemoveChildIDs    []uuid.UUID
+	LocationID        *uuid.UUID
+	ClearTags         bool
+	AddTagIDs         []uuid.UUID
+	RemoveTagIDs      []uuid.UUID
 }
 
 // Mutate applies the UpdateAssetInput on the AssetMutation builder.
 func (i *UpdateAssetInput) Mutate(m *AssetMutation) {
-	if i.ClearName {
-		m.ClearName()
-	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
+	}
+	if v := i.Quantity; v != nil {
+		m.SetQuantity(*v)
+	}
+	if i.ClearModelNumber {
+		m.ClearModelNumber()
+	}
+	if v := i.ModelNumber; v != nil {
+		m.SetModelNumber(*v)
+	}
+	if i.ClearSerialNumber {
+		m.ClearSerialNumber()
+	}
+	if v := i.SerialNumber; v != nil {
+		m.SetSerialNumber(*v)
 	}
 	if i.ClearParent {
 		m.ClearParent()
@@ -80,9 +103,6 @@ func (i *UpdateAssetInput) Mutate(m *AssetMutation) {
 	}
 	if v := i.RemoveChildIDs; len(v) > 0 {
 		m.RemoveChildIDs(v...)
-	}
-	if i.ClearLocation {
-		m.ClearLocation()
 	}
 	if v := i.LocationID; v != nil {
 		m.SetLocationID(*v)

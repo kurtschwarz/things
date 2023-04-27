@@ -43,6 +43,10 @@ type AssetMutation struct {
 	typ               string
 	id                *uuid.UUID
 	name              *string
+	quantity          *int
+	addquantity       *int
+	model_number      *string
+	serial_number     *string
 	clearedFields     map[string]struct{}
 	parent            *uuid.UUID
 	clearedparent     bool
@@ -183,7 +187,7 @@ func (m *AssetMutation) ParentID() (r uuid.UUID, exists bool) {
 // OldParentID returns the old "parent_id" field's value of the Asset entity.
 // If the Asset object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AssetMutation) OldParentID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *AssetMutation) OldParentID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
 	}
@@ -246,22 +250,9 @@ func (m *AssetMutation) OldLocationID(ctx context.Context) (v uuid.UUID, err err
 	return oldValue.LocationID, nil
 }
 
-// ClearLocationID clears the value of the "location_id" field.
-func (m *AssetMutation) ClearLocationID() {
-	m.location = nil
-	m.clearedFields[asset.FieldLocationID] = struct{}{}
-}
-
-// LocationIDCleared returns if the "location_id" field was cleared in this mutation.
-func (m *AssetMutation) LocationIDCleared() bool {
-	_, ok := m.clearedFields[asset.FieldLocationID]
-	return ok
-}
-
 // ResetLocationID resets all changes to the "location_id" field.
 func (m *AssetMutation) ResetLocationID() {
 	m.location = nil
-	delete(m.clearedFields, asset.FieldLocationID)
 }
 
 // SetName sets the "name" field.
@@ -295,22 +286,163 @@ func (m *AssetMutation) OldName(ctx context.Context) (v string, err error) {
 	return oldValue.Name, nil
 }
 
-// ClearName clears the value of the "name" field.
-func (m *AssetMutation) ClearName() {
-	m.name = nil
-	m.clearedFields[asset.FieldName] = struct{}{}
-}
-
-// NameCleared returns if the "name" field was cleared in this mutation.
-func (m *AssetMutation) NameCleared() bool {
-	_, ok := m.clearedFields[asset.FieldName]
-	return ok
-}
-
 // ResetName resets all changes to the "name" field.
 func (m *AssetMutation) ResetName() {
 	m.name = nil
-	delete(m.clearedFields, asset.FieldName)
+}
+
+// SetQuantity sets the "quantity" field.
+func (m *AssetMutation) SetQuantity(i int) {
+	m.quantity = &i
+	m.addquantity = nil
+}
+
+// Quantity returns the value of the "quantity" field in the mutation.
+func (m *AssetMutation) Quantity() (r int, exists bool) {
+	v := m.quantity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQuantity returns the old "quantity" field's value of the Asset entity.
+// If the Asset object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetMutation) OldQuantity(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQuantity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQuantity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQuantity: %w", err)
+	}
+	return oldValue.Quantity, nil
+}
+
+// AddQuantity adds i to the "quantity" field.
+func (m *AssetMutation) AddQuantity(i int) {
+	if m.addquantity != nil {
+		*m.addquantity += i
+	} else {
+		m.addquantity = &i
+	}
+}
+
+// AddedQuantity returns the value that was added to the "quantity" field in this mutation.
+func (m *AssetMutation) AddedQuantity() (r int, exists bool) {
+	v := m.addquantity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetQuantity resets all changes to the "quantity" field.
+func (m *AssetMutation) ResetQuantity() {
+	m.quantity = nil
+	m.addquantity = nil
+}
+
+// SetModelNumber sets the "model_number" field.
+func (m *AssetMutation) SetModelNumber(s string) {
+	m.model_number = &s
+}
+
+// ModelNumber returns the value of the "model_number" field in the mutation.
+func (m *AssetMutation) ModelNumber() (r string, exists bool) {
+	v := m.model_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModelNumber returns the old "model_number" field's value of the Asset entity.
+// If the Asset object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetMutation) OldModelNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModelNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModelNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModelNumber: %w", err)
+	}
+	return oldValue.ModelNumber, nil
+}
+
+// ClearModelNumber clears the value of the "model_number" field.
+func (m *AssetMutation) ClearModelNumber() {
+	m.model_number = nil
+	m.clearedFields[asset.FieldModelNumber] = struct{}{}
+}
+
+// ModelNumberCleared returns if the "model_number" field was cleared in this mutation.
+func (m *AssetMutation) ModelNumberCleared() bool {
+	_, ok := m.clearedFields[asset.FieldModelNumber]
+	return ok
+}
+
+// ResetModelNumber resets all changes to the "model_number" field.
+func (m *AssetMutation) ResetModelNumber() {
+	m.model_number = nil
+	delete(m.clearedFields, asset.FieldModelNumber)
+}
+
+// SetSerialNumber sets the "serial_number" field.
+func (m *AssetMutation) SetSerialNumber(s string) {
+	m.serial_number = &s
+}
+
+// SerialNumber returns the value of the "serial_number" field in the mutation.
+func (m *AssetMutation) SerialNumber() (r string, exists bool) {
+	v := m.serial_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSerialNumber returns the old "serial_number" field's value of the Asset entity.
+// If the Asset object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetMutation) OldSerialNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSerialNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSerialNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSerialNumber: %w", err)
+	}
+	return oldValue.SerialNumber, nil
+}
+
+// ClearSerialNumber clears the value of the "serial_number" field.
+func (m *AssetMutation) ClearSerialNumber() {
+	m.serial_number = nil
+	m.clearedFields[asset.FieldSerialNumber] = struct{}{}
+}
+
+// SerialNumberCleared returns if the "serial_number" field was cleared in this mutation.
+func (m *AssetMutation) SerialNumberCleared() bool {
+	_, ok := m.clearedFields[asset.FieldSerialNumber]
+	return ok
+}
+
+// ResetSerialNumber resets all changes to the "serial_number" field.
+func (m *AssetMutation) ResetSerialNumber() {
+	m.serial_number = nil
+	delete(m.clearedFields, asset.FieldSerialNumber)
 }
 
 // ClearParent clears the "parent" edge to the Asset entity.
@@ -400,7 +532,7 @@ func (m *AssetMutation) ClearLocation() {
 
 // LocationCleared reports if the "location" edge to the Location entity was cleared.
 func (m *AssetMutation) LocationCleared() bool {
-	return m.LocationIDCleared() || m.clearedlocation
+	return m.clearedlocation
 }
 
 // LocationIDs returns the "location" edge IDs in the mutation.
@@ -561,7 +693,7 @@ func (m *AssetMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AssetMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 6)
 	if m.parent != nil {
 		fields = append(fields, asset.FieldParentID)
 	}
@@ -570,6 +702,15 @@ func (m *AssetMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, asset.FieldName)
+	}
+	if m.quantity != nil {
+		fields = append(fields, asset.FieldQuantity)
+	}
+	if m.model_number != nil {
+		fields = append(fields, asset.FieldModelNumber)
+	}
+	if m.serial_number != nil {
+		fields = append(fields, asset.FieldSerialNumber)
 	}
 	return fields
 }
@@ -585,6 +726,12 @@ func (m *AssetMutation) Field(name string) (ent.Value, bool) {
 		return m.LocationID()
 	case asset.FieldName:
 		return m.Name()
+	case asset.FieldQuantity:
+		return m.Quantity()
+	case asset.FieldModelNumber:
+		return m.ModelNumber()
+	case asset.FieldSerialNumber:
+		return m.SerialNumber()
 	}
 	return nil, false
 }
@@ -600,6 +747,12 @@ func (m *AssetMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLocationID(ctx)
 	case asset.FieldName:
 		return m.OldName(ctx)
+	case asset.FieldQuantity:
+		return m.OldQuantity(ctx)
+	case asset.FieldModelNumber:
+		return m.OldModelNumber(ctx)
+	case asset.FieldSerialNumber:
+		return m.OldSerialNumber(ctx)
 	}
 	return nil, fmt.Errorf("unknown Asset field %s", name)
 }
@@ -630,6 +783,27 @@ func (m *AssetMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetName(v)
 		return nil
+	case asset.FieldQuantity:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQuantity(v)
+		return nil
+	case asset.FieldModelNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModelNumber(v)
+		return nil
+	case asset.FieldSerialNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSerialNumber(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Asset field %s", name)
 }
@@ -637,13 +811,21 @@ func (m *AssetMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *AssetMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addquantity != nil {
+		fields = append(fields, asset.FieldQuantity)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *AssetMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case asset.FieldQuantity:
+		return m.AddedQuantity()
+	}
 	return nil, false
 }
 
@@ -652,6 +834,13 @@ func (m *AssetMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *AssetMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case asset.FieldQuantity:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddQuantity(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Asset numeric field %s", name)
 }
@@ -663,11 +852,11 @@ func (m *AssetMutation) ClearedFields() []string {
 	if m.FieldCleared(asset.FieldParentID) {
 		fields = append(fields, asset.FieldParentID)
 	}
-	if m.FieldCleared(asset.FieldLocationID) {
-		fields = append(fields, asset.FieldLocationID)
+	if m.FieldCleared(asset.FieldModelNumber) {
+		fields = append(fields, asset.FieldModelNumber)
 	}
-	if m.FieldCleared(asset.FieldName) {
-		fields = append(fields, asset.FieldName)
+	if m.FieldCleared(asset.FieldSerialNumber) {
+		fields = append(fields, asset.FieldSerialNumber)
 	}
 	return fields
 }
@@ -686,11 +875,11 @@ func (m *AssetMutation) ClearField(name string) error {
 	case asset.FieldParentID:
 		m.ClearParentID()
 		return nil
-	case asset.FieldLocationID:
-		m.ClearLocationID()
+	case asset.FieldModelNumber:
+		m.ClearModelNumber()
 		return nil
-	case asset.FieldName:
-		m.ClearName()
+	case asset.FieldSerialNumber:
+		m.ClearSerialNumber()
 		return nil
 	}
 	return fmt.Errorf("unknown Asset nullable field %s", name)
@@ -708,6 +897,15 @@ func (m *AssetMutation) ResetField(name string) error {
 		return nil
 	case asset.FieldName:
 		m.ResetName()
+		return nil
+	case asset.FieldQuantity:
+		m.ResetQuantity()
+		return nil
+	case asset.FieldModelNumber:
+		m.ResetModelNumber()
+		return nil
+	case asset.FieldSerialNumber:
+		m.ResetSerialNumber()
 		return nil
 	}
 	return fmt.Errorf("unknown Asset field %s", name)

@@ -42,12 +42,10 @@ type AssetWhereInput struct {
 	ParentIDNotNil bool        `json:"parentIDNotNil,omitempty"`
 
 	// "location_id" field predicates.
-	LocationID       *uuid.UUID  `json:"locationID,omitempty"`
-	LocationIDNEQ    *uuid.UUID  `json:"locationIDNEQ,omitempty"`
-	LocationIDIn     []uuid.UUID `json:"locationIDIn,omitempty"`
-	LocationIDNotIn  []uuid.UUID `json:"locationIDNotIn,omitempty"`
-	LocationIDIsNil  bool        `json:"locationIDIsNil,omitempty"`
-	LocationIDNotNil bool        `json:"locationIDNotNil,omitempty"`
+	LocationID      *uuid.UUID  `json:"locationID,omitempty"`
+	LocationIDNEQ   *uuid.UUID  `json:"locationIDNEQ,omitempty"`
+	LocationIDIn    []uuid.UUID `json:"locationIDIn,omitempty"`
+	LocationIDNotIn []uuid.UUID `json:"locationIDNotIn,omitempty"`
 
 	// "name" field predicates.
 	Name             *string  `json:"name,omitempty"`
@@ -61,10 +59,52 @@ type AssetWhereInput struct {
 	NameContains     *string  `json:"nameContains,omitempty"`
 	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
 	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
-	NameIsNil        bool     `json:"nameIsNil,omitempty"`
-	NameNotNil       bool     `json:"nameNotNil,omitempty"`
 	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
 	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+
+	// "quantity" field predicates.
+	Quantity      *int  `json:"quantity,omitempty"`
+	QuantityNEQ   *int  `json:"quantityNEQ,omitempty"`
+	QuantityIn    []int `json:"quantityIn,omitempty"`
+	QuantityNotIn []int `json:"quantityNotIn,omitempty"`
+	QuantityGT    *int  `json:"quantityGT,omitempty"`
+	QuantityGTE   *int  `json:"quantityGTE,omitempty"`
+	QuantityLT    *int  `json:"quantityLT,omitempty"`
+	QuantityLTE   *int  `json:"quantityLTE,omitempty"`
+
+	// "model_number" field predicates.
+	ModelNumber             *string  `json:"modelNumber,omitempty"`
+	ModelNumberNEQ          *string  `json:"modelNumberNEQ,omitempty"`
+	ModelNumberIn           []string `json:"modelNumberIn,omitempty"`
+	ModelNumberNotIn        []string `json:"modelNumberNotIn,omitempty"`
+	ModelNumberGT           *string  `json:"modelNumberGT,omitempty"`
+	ModelNumberGTE          *string  `json:"modelNumberGTE,omitempty"`
+	ModelNumberLT           *string  `json:"modelNumberLT,omitempty"`
+	ModelNumberLTE          *string  `json:"modelNumberLTE,omitempty"`
+	ModelNumberContains     *string  `json:"modelNumberContains,omitempty"`
+	ModelNumberHasPrefix    *string  `json:"modelNumberHasPrefix,omitempty"`
+	ModelNumberHasSuffix    *string  `json:"modelNumberHasSuffix,omitempty"`
+	ModelNumberIsNil        bool     `json:"modelNumberIsNil,omitempty"`
+	ModelNumberNotNil       bool     `json:"modelNumberNotNil,omitempty"`
+	ModelNumberEqualFold    *string  `json:"modelNumberEqualFold,omitempty"`
+	ModelNumberContainsFold *string  `json:"modelNumberContainsFold,omitempty"`
+
+	// "serial_number" field predicates.
+	SerialNumber             *string  `json:"serialNumber,omitempty"`
+	SerialNumberNEQ          *string  `json:"serialNumberNEQ,omitempty"`
+	SerialNumberIn           []string `json:"serialNumberIn,omitempty"`
+	SerialNumberNotIn        []string `json:"serialNumberNotIn,omitempty"`
+	SerialNumberGT           *string  `json:"serialNumberGT,omitempty"`
+	SerialNumberGTE          *string  `json:"serialNumberGTE,omitempty"`
+	SerialNumberLT           *string  `json:"serialNumberLT,omitempty"`
+	SerialNumberLTE          *string  `json:"serialNumberLTE,omitempty"`
+	SerialNumberContains     *string  `json:"serialNumberContains,omitempty"`
+	SerialNumberHasPrefix    *string  `json:"serialNumberHasPrefix,omitempty"`
+	SerialNumberHasSuffix    *string  `json:"serialNumberHasSuffix,omitempty"`
+	SerialNumberIsNil        bool     `json:"serialNumberIsNil,omitempty"`
+	SerialNumberNotNil       bool     `json:"serialNumberNotNil,omitempty"`
+	SerialNumberEqualFold    *string  `json:"serialNumberEqualFold,omitempty"`
+	SerialNumberContainsFold *string  `json:"serialNumberContainsFold,omitempty"`
 
 	// "parent" edge predicates.
 	HasParent     *bool              `json:"hasParent,omitempty"`
@@ -212,12 +252,6 @@ func (i *AssetWhereInput) P() (predicate.Asset, error) {
 	if len(i.LocationIDNotIn) > 0 {
 		predicates = append(predicates, asset.LocationIDNotIn(i.LocationIDNotIn...))
 	}
-	if i.LocationIDIsNil {
-		predicates = append(predicates, asset.LocationIDIsNil())
-	}
-	if i.LocationIDNotNil {
-		predicates = append(predicates, asset.LocationIDNotNil())
-	}
 	if i.Name != nil {
 		predicates = append(predicates, asset.NameEQ(*i.Name))
 	}
@@ -251,17 +285,125 @@ func (i *AssetWhereInput) P() (predicate.Asset, error) {
 	if i.NameHasSuffix != nil {
 		predicates = append(predicates, asset.NameHasSuffix(*i.NameHasSuffix))
 	}
-	if i.NameIsNil {
-		predicates = append(predicates, asset.NameIsNil())
-	}
-	if i.NameNotNil {
-		predicates = append(predicates, asset.NameNotNil())
-	}
 	if i.NameEqualFold != nil {
 		predicates = append(predicates, asset.NameEqualFold(*i.NameEqualFold))
 	}
 	if i.NameContainsFold != nil {
 		predicates = append(predicates, asset.NameContainsFold(*i.NameContainsFold))
+	}
+	if i.Quantity != nil {
+		predicates = append(predicates, asset.QuantityEQ(*i.Quantity))
+	}
+	if i.QuantityNEQ != nil {
+		predicates = append(predicates, asset.QuantityNEQ(*i.QuantityNEQ))
+	}
+	if len(i.QuantityIn) > 0 {
+		predicates = append(predicates, asset.QuantityIn(i.QuantityIn...))
+	}
+	if len(i.QuantityNotIn) > 0 {
+		predicates = append(predicates, asset.QuantityNotIn(i.QuantityNotIn...))
+	}
+	if i.QuantityGT != nil {
+		predicates = append(predicates, asset.QuantityGT(*i.QuantityGT))
+	}
+	if i.QuantityGTE != nil {
+		predicates = append(predicates, asset.QuantityGTE(*i.QuantityGTE))
+	}
+	if i.QuantityLT != nil {
+		predicates = append(predicates, asset.QuantityLT(*i.QuantityLT))
+	}
+	if i.QuantityLTE != nil {
+		predicates = append(predicates, asset.QuantityLTE(*i.QuantityLTE))
+	}
+	if i.ModelNumber != nil {
+		predicates = append(predicates, asset.ModelNumberEQ(*i.ModelNumber))
+	}
+	if i.ModelNumberNEQ != nil {
+		predicates = append(predicates, asset.ModelNumberNEQ(*i.ModelNumberNEQ))
+	}
+	if len(i.ModelNumberIn) > 0 {
+		predicates = append(predicates, asset.ModelNumberIn(i.ModelNumberIn...))
+	}
+	if len(i.ModelNumberNotIn) > 0 {
+		predicates = append(predicates, asset.ModelNumberNotIn(i.ModelNumberNotIn...))
+	}
+	if i.ModelNumberGT != nil {
+		predicates = append(predicates, asset.ModelNumberGT(*i.ModelNumberGT))
+	}
+	if i.ModelNumberGTE != nil {
+		predicates = append(predicates, asset.ModelNumberGTE(*i.ModelNumberGTE))
+	}
+	if i.ModelNumberLT != nil {
+		predicates = append(predicates, asset.ModelNumberLT(*i.ModelNumberLT))
+	}
+	if i.ModelNumberLTE != nil {
+		predicates = append(predicates, asset.ModelNumberLTE(*i.ModelNumberLTE))
+	}
+	if i.ModelNumberContains != nil {
+		predicates = append(predicates, asset.ModelNumberContains(*i.ModelNumberContains))
+	}
+	if i.ModelNumberHasPrefix != nil {
+		predicates = append(predicates, asset.ModelNumberHasPrefix(*i.ModelNumberHasPrefix))
+	}
+	if i.ModelNumberHasSuffix != nil {
+		predicates = append(predicates, asset.ModelNumberHasSuffix(*i.ModelNumberHasSuffix))
+	}
+	if i.ModelNumberIsNil {
+		predicates = append(predicates, asset.ModelNumberIsNil())
+	}
+	if i.ModelNumberNotNil {
+		predicates = append(predicates, asset.ModelNumberNotNil())
+	}
+	if i.ModelNumberEqualFold != nil {
+		predicates = append(predicates, asset.ModelNumberEqualFold(*i.ModelNumberEqualFold))
+	}
+	if i.ModelNumberContainsFold != nil {
+		predicates = append(predicates, asset.ModelNumberContainsFold(*i.ModelNumberContainsFold))
+	}
+	if i.SerialNumber != nil {
+		predicates = append(predicates, asset.SerialNumberEQ(*i.SerialNumber))
+	}
+	if i.SerialNumberNEQ != nil {
+		predicates = append(predicates, asset.SerialNumberNEQ(*i.SerialNumberNEQ))
+	}
+	if len(i.SerialNumberIn) > 0 {
+		predicates = append(predicates, asset.SerialNumberIn(i.SerialNumberIn...))
+	}
+	if len(i.SerialNumberNotIn) > 0 {
+		predicates = append(predicates, asset.SerialNumberNotIn(i.SerialNumberNotIn...))
+	}
+	if i.SerialNumberGT != nil {
+		predicates = append(predicates, asset.SerialNumberGT(*i.SerialNumberGT))
+	}
+	if i.SerialNumberGTE != nil {
+		predicates = append(predicates, asset.SerialNumberGTE(*i.SerialNumberGTE))
+	}
+	if i.SerialNumberLT != nil {
+		predicates = append(predicates, asset.SerialNumberLT(*i.SerialNumberLT))
+	}
+	if i.SerialNumberLTE != nil {
+		predicates = append(predicates, asset.SerialNumberLTE(*i.SerialNumberLTE))
+	}
+	if i.SerialNumberContains != nil {
+		predicates = append(predicates, asset.SerialNumberContains(*i.SerialNumberContains))
+	}
+	if i.SerialNumberHasPrefix != nil {
+		predicates = append(predicates, asset.SerialNumberHasPrefix(*i.SerialNumberHasPrefix))
+	}
+	if i.SerialNumberHasSuffix != nil {
+		predicates = append(predicates, asset.SerialNumberHasSuffix(*i.SerialNumberHasSuffix))
+	}
+	if i.SerialNumberIsNil {
+		predicates = append(predicates, asset.SerialNumberIsNil())
+	}
+	if i.SerialNumberNotNil {
+		predicates = append(predicates, asset.SerialNumberNotNil())
+	}
+	if i.SerialNumberEqualFold != nil {
+		predicates = append(predicates, asset.SerialNumberEqualFold(*i.SerialNumberEqualFold))
+	}
+	if i.SerialNumberContainsFold != nil {
+		predicates = append(predicates, asset.SerialNumberContainsFold(*i.SerialNumberContainsFold))
 	}
 
 	if i.HasParent != nil {

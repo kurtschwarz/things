@@ -19,6 +19,10 @@ import (
 func init() {
 	assetFields := schema.Asset{}.Fields()
 	_ = assetFields
+	// assetDescQuantity is the schema descriptor for quantity field.
+	assetDescQuantity := assetFields[4].Descriptor()
+	// asset.DefaultQuantity holds the default value on creation for the quantity field.
+	asset.DefaultQuantity = assetDescQuantity.Default.(int)
 	// assetDescID is the schema descriptor for id field.
 	assetDescID := assetFields[0].Descriptor()
 	// asset.DefaultID holds the default value on creation for the id field.

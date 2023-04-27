@@ -11,9 +11,12 @@ var (
 	// AssetsColumns holds the columns for the "assets" table.
 	AssetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "name", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "name", Type: field.TypeString, Size: 2147483647},
+		{Name: "quantity", Type: field.TypeInt, Default: 1},
+		{Name: "model_number", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "serial_number", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "location_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "location_id", Type: field.TypeUUID},
 	}
 	// AssetsTable holds the schema information for the "assets" table.
 	AssetsTable = &schema.Table{
@@ -23,15 +26,15 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "assets_assets_children",
-				Columns:    []*schema.Column{AssetsColumns[2]},
+				Columns:    []*schema.Column{AssetsColumns[5]},
 				RefColumns: []*schema.Column{AssetsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "assets_locations_location",
-				Columns:    []*schema.Column{AssetsColumns[3]},
+				Columns:    []*schema.Column{AssetsColumns[6]},
 				RefColumns: []*schema.Column{LocationsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}

@@ -1,14 +1,17 @@
 import { FieldPolicy, FieldReadFunction, TypePolicies, TypePolicy } from '@apollo/client/cache';
-export type AssetKeySpecifier = ('assetTags' | 'children' | 'id' | 'location' | 'locationID' | 'name' | 'parent' | 'parentID' | 'tags' | AssetKeySpecifier)[];
+export type AssetKeySpecifier = ('assetTags' | 'children' | 'id' | 'location' | 'locationID' | 'modelNumber' | 'name' | 'parent' | 'parentID' | 'quantity' | 'serialNumber' | 'tags' | AssetKeySpecifier)[];
 export type AssetFieldPolicy = {
 	assetTags?: FieldPolicy<any> | FieldReadFunction<any>,
 	children?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	location?: FieldPolicy<any> | FieldReadFunction<any>,
 	locationID?: FieldPolicy<any> | FieldReadFunction<any>,
+	modelNumber?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>,
 	parent?: FieldPolicy<any> | FieldReadFunction<any>,
 	parentID?: FieldPolicy<any> | FieldReadFunction<any>,
+	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
+	serialNumber?: FieldPolicy<any> | FieldReadFunction<any>,
 	tags?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type AssetConnectionKeySpecifier = ('edges' | 'pageInfo' | 'totalCount' | AssetConnectionKeySpecifier)[];
@@ -58,12 +61,13 @@ export type LocationStatsFieldPolicy = {
 	totalLocations?: FieldPolicy<any> | FieldReadFunction<any>,
 	totalValue?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('createAsset' | 'createLocation' | 'createTag' | 'createUser' | 'deleteLocation' | 'updateAsset' | 'updateLocation' | 'updateTag' | 'updateUser' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('createAsset' | 'createLocation' | 'createTag' | 'createUser' | 'deleteAsset' | 'deleteLocation' | 'updateAsset' | 'updateLocation' | 'updateTag' | 'updateUser' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
 	createAsset?: FieldPolicy<any> | FieldReadFunction<any>,
 	createLocation?: FieldPolicy<any> | FieldReadFunction<any>,
 	createTag?: FieldPolicy<any> | FieldReadFunction<any>,
 	createUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteAsset?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteLocation?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateAsset?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateLocation?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -81,8 +85,9 @@ export type PageInfoFieldPolicy = {
 	hasPreviousPage?: FieldPolicy<any> | FieldReadFunction<any>,
 	startCursor?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('assets' | 'location' | 'locations' | 'node' | 'nodes' | 'tags' | 'users' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('asset' | 'assets' | 'location' | 'locations' | 'node' | 'nodes' | 'tags' | 'users' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
+	asset?: FieldPolicy<any> | FieldReadFunction<any>,
 	assets?: FieldPolicy<any> | FieldReadFunction<any>,
 	location?: FieldPolicy<any> | FieldReadFunction<any>,
 	locations?: FieldPolicy<any> | FieldReadFunction<any>,

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"things-api/ent/asset"
 	"things-api/ent/assettag"
@@ -42,24 +43,50 @@ func (ac *AssetCreate) SetLocationID(u uuid.UUID) *AssetCreate {
 	return ac
 }
 
-// SetNillableLocationID sets the "location_id" field if the given value is not nil.
-func (ac *AssetCreate) SetNillableLocationID(u *uuid.UUID) *AssetCreate {
-	if u != nil {
-		ac.SetLocationID(*u)
-	}
-	return ac
-}
-
 // SetName sets the "name" field.
 func (ac *AssetCreate) SetName(s string) *AssetCreate {
 	ac.mutation.SetName(s)
 	return ac
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (ac *AssetCreate) SetNillableName(s *string) *AssetCreate {
+// SetQuantity sets the "quantity" field.
+func (ac *AssetCreate) SetQuantity(i int) *AssetCreate {
+	ac.mutation.SetQuantity(i)
+	return ac
+}
+
+// SetNillableQuantity sets the "quantity" field if the given value is not nil.
+func (ac *AssetCreate) SetNillableQuantity(i *int) *AssetCreate {
+	if i != nil {
+		ac.SetQuantity(*i)
+	}
+	return ac
+}
+
+// SetModelNumber sets the "model_number" field.
+func (ac *AssetCreate) SetModelNumber(s string) *AssetCreate {
+	ac.mutation.SetModelNumber(s)
+	return ac
+}
+
+// SetNillableModelNumber sets the "model_number" field if the given value is not nil.
+func (ac *AssetCreate) SetNillableModelNumber(s *string) *AssetCreate {
 	if s != nil {
-		ac.SetName(*s)
+		ac.SetModelNumber(*s)
+	}
+	return ac
+}
+
+// SetSerialNumber sets the "serial_number" field.
+func (ac *AssetCreate) SetSerialNumber(s string) *AssetCreate {
+	ac.mutation.SetSerialNumber(s)
+	return ac
+}
+
+// SetNillableSerialNumber sets the "serial_number" field if the given value is not nil.
+func (ac *AssetCreate) SetNillableSerialNumber(s *string) *AssetCreate {
+	if s != nil {
+		ac.SetSerialNumber(*s)
 	}
 	return ac
 }
@@ -168,6 +195,10 @@ func (ac *AssetCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (ac *AssetCreate) defaults() {
+	if _, ok := ac.mutation.Quantity(); !ok {
+		v := asset.DefaultQuantity
+		ac.mutation.SetQuantity(v)
+	}
 	if _, ok := ac.mutation.ID(); !ok {
 		v := asset.DefaultID()
 		ac.mutation.SetID(v)
@@ -176,6 +207,18 @@ func (ac *AssetCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *AssetCreate) check() error {
+	if _, ok := ac.mutation.LocationID(); !ok {
+		return &ValidationError{Name: "location_id", err: errors.New(`ent: missing required field "Asset.location_id"`)}
+	}
+	if _, ok := ac.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Asset.name"`)}
+	}
+	if _, ok := ac.mutation.Quantity(); !ok {
+		return &ValidationError{Name: "quantity", err: errors.New(`ent: missing required field "Asset.quantity"`)}
+	}
+	if _, ok := ac.mutation.LocationID(); !ok {
+		return &ValidationError{Name: "location", err: errors.New(`ent: missing required edge "Asset.location"`)}
+	}
 	return nil
 }
 
@@ -215,6 +258,18 @@ func (ac *AssetCreate) createSpec() (*Asset, *sqlgraph.CreateSpec) {
 		_spec.SetField(asset.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := ac.mutation.Quantity(); ok {
+		_spec.SetField(asset.FieldQuantity, field.TypeInt, value)
+		_node.Quantity = value
+	}
+	if value, ok := ac.mutation.ModelNumber(); ok {
+		_spec.SetField(asset.FieldModelNumber, field.TypeString, value)
+		_node.ModelNumber = value
+	}
+	if value, ok := ac.mutation.SerialNumber(); ok {
+		_spec.SetField(asset.FieldSerialNumber, field.TypeString, value)
+		_node.SerialNumber = value
+	}
 	if nodes := ac.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -229,7 +284,7 @@ func (ac *AssetCreate) createSpec() (*Asset, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.ParentID = nodes[0]
+		_node.ParentID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := ac.mutation.ChildrenIDs(); len(nodes) > 0 {

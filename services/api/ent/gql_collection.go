@@ -114,6 +114,21 @@ func (a *AssetQuery) collectField(ctx context.Context, opCtx *graphql.OperationC
 				selectedFields = append(selectedFields, asset.FieldName)
 				fieldSeen[asset.FieldName] = struct{}{}
 			}
+		case "quantity":
+			if _, ok := fieldSeen[asset.FieldQuantity]; !ok {
+				selectedFields = append(selectedFields, asset.FieldQuantity)
+				fieldSeen[asset.FieldQuantity] = struct{}{}
+			}
+		case "modelNumber":
+			if _, ok := fieldSeen[asset.FieldModelNumber]; !ok {
+				selectedFields = append(selectedFields, asset.FieldModelNumber)
+				fieldSeen[asset.FieldModelNumber] = struct{}{}
+			}
+		case "serialNumber":
+			if _, ok := fieldSeen[asset.FieldSerialNumber]; !ok {
+				selectedFields = append(selectedFields, asset.FieldSerialNumber)
+				fieldSeen[asset.FieldSerialNumber] = struct{}{}
+			}
 		default:
 			unknownSeen = true
 		}

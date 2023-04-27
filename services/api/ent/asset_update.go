@@ -57,37 +57,70 @@ func (au *AssetUpdate) SetLocationID(u uuid.UUID) *AssetUpdate {
 	return au
 }
 
-// SetNillableLocationID sets the "location_id" field if the given value is not nil.
-func (au *AssetUpdate) SetNillableLocationID(u *uuid.UUID) *AssetUpdate {
-	if u != nil {
-		au.SetLocationID(*u)
-	}
-	return au
-}
-
-// ClearLocationID clears the value of the "location_id" field.
-func (au *AssetUpdate) ClearLocationID() *AssetUpdate {
-	au.mutation.ClearLocationID()
-	return au
-}
-
 // SetName sets the "name" field.
 func (au *AssetUpdate) SetName(s string) *AssetUpdate {
 	au.mutation.SetName(s)
 	return au
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (au *AssetUpdate) SetNillableName(s *string) *AssetUpdate {
-	if s != nil {
-		au.SetName(*s)
+// SetQuantity sets the "quantity" field.
+func (au *AssetUpdate) SetQuantity(i int) *AssetUpdate {
+	au.mutation.ResetQuantity()
+	au.mutation.SetQuantity(i)
+	return au
+}
+
+// SetNillableQuantity sets the "quantity" field if the given value is not nil.
+func (au *AssetUpdate) SetNillableQuantity(i *int) *AssetUpdate {
+	if i != nil {
+		au.SetQuantity(*i)
 	}
 	return au
 }
 
-// ClearName clears the value of the "name" field.
-func (au *AssetUpdate) ClearName() *AssetUpdate {
-	au.mutation.ClearName()
+// AddQuantity adds i to the "quantity" field.
+func (au *AssetUpdate) AddQuantity(i int) *AssetUpdate {
+	au.mutation.AddQuantity(i)
+	return au
+}
+
+// SetModelNumber sets the "model_number" field.
+func (au *AssetUpdate) SetModelNumber(s string) *AssetUpdate {
+	au.mutation.SetModelNumber(s)
+	return au
+}
+
+// SetNillableModelNumber sets the "model_number" field if the given value is not nil.
+func (au *AssetUpdate) SetNillableModelNumber(s *string) *AssetUpdate {
+	if s != nil {
+		au.SetModelNumber(*s)
+	}
+	return au
+}
+
+// ClearModelNumber clears the value of the "model_number" field.
+func (au *AssetUpdate) ClearModelNumber() *AssetUpdate {
+	au.mutation.ClearModelNumber()
+	return au
+}
+
+// SetSerialNumber sets the "serial_number" field.
+func (au *AssetUpdate) SetSerialNumber(s string) *AssetUpdate {
+	au.mutation.SetSerialNumber(s)
+	return au
+}
+
+// SetNillableSerialNumber sets the "serial_number" field if the given value is not nil.
+func (au *AssetUpdate) SetNillableSerialNumber(s *string) *AssetUpdate {
+	if s != nil {
+		au.SetSerialNumber(*s)
+	}
+	return au
+}
+
+// ClearSerialNumber clears the value of the "serial_number" field.
+func (au *AssetUpdate) ClearSerialNumber() *AssetUpdate {
+	au.mutation.ClearSerialNumber()
 	return au
 }
 
@@ -253,7 +286,18 @@ func (au *AssetUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (au *AssetUpdate) check() error {
+	if _, ok := au.mutation.LocationID(); au.mutation.LocationCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Asset.location"`)
+	}
+	return nil
+}
+
 func (au *AssetUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := au.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(asset.Table, asset.Columns, sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID))
 	if ps := au.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -265,8 +309,23 @@ func (au *AssetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := au.mutation.Name(); ok {
 		_spec.SetField(asset.FieldName, field.TypeString, value)
 	}
-	if au.mutation.NameCleared() {
-		_spec.ClearField(asset.FieldName, field.TypeString)
+	if value, ok := au.mutation.Quantity(); ok {
+		_spec.SetField(asset.FieldQuantity, field.TypeInt, value)
+	}
+	if value, ok := au.mutation.AddedQuantity(); ok {
+		_spec.AddField(asset.FieldQuantity, field.TypeInt, value)
+	}
+	if value, ok := au.mutation.ModelNumber(); ok {
+		_spec.SetField(asset.FieldModelNumber, field.TypeString, value)
+	}
+	if au.mutation.ModelNumberCleared() {
+		_spec.ClearField(asset.FieldModelNumber, field.TypeString)
+	}
+	if value, ok := au.mutation.SerialNumber(); ok {
+		_spec.SetField(asset.FieldSerialNumber, field.TypeString, value)
+	}
+	if au.mutation.SerialNumberCleared() {
+		_spec.ClearField(asset.FieldSerialNumber, field.TypeString)
 	}
 	if au.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -528,37 +587,70 @@ func (auo *AssetUpdateOne) SetLocationID(u uuid.UUID) *AssetUpdateOne {
 	return auo
 }
 
-// SetNillableLocationID sets the "location_id" field if the given value is not nil.
-func (auo *AssetUpdateOne) SetNillableLocationID(u *uuid.UUID) *AssetUpdateOne {
-	if u != nil {
-		auo.SetLocationID(*u)
-	}
-	return auo
-}
-
-// ClearLocationID clears the value of the "location_id" field.
-func (auo *AssetUpdateOne) ClearLocationID() *AssetUpdateOne {
-	auo.mutation.ClearLocationID()
-	return auo
-}
-
 // SetName sets the "name" field.
 func (auo *AssetUpdateOne) SetName(s string) *AssetUpdateOne {
 	auo.mutation.SetName(s)
 	return auo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (auo *AssetUpdateOne) SetNillableName(s *string) *AssetUpdateOne {
-	if s != nil {
-		auo.SetName(*s)
+// SetQuantity sets the "quantity" field.
+func (auo *AssetUpdateOne) SetQuantity(i int) *AssetUpdateOne {
+	auo.mutation.ResetQuantity()
+	auo.mutation.SetQuantity(i)
+	return auo
+}
+
+// SetNillableQuantity sets the "quantity" field if the given value is not nil.
+func (auo *AssetUpdateOne) SetNillableQuantity(i *int) *AssetUpdateOne {
+	if i != nil {
+		auo.SetQuantity(*i)
 	}
 	return auo
 }
 
-// ClearName clears the value of the "name" field.
-func (auo *AssetUpdateOne) ClearName() *AssetUpdateOne {
-	auo.mutation.ClearName()
+// AddQuantity adds i to the "quantity" field.
+func (auo *AssetUpdateOne) AddQuantity(i int) *AssetUpdateOne {
+	auo.mutation.AddQuantity(i)
+	return auo
+}
+
+// SetModelNumber sets the "model_number" field.
+func (auo *AssetUpdateOne) SetModelNumber(s string) *AssetUpdateOne {
+	auo.mutation.SetModelNumber(s)
+	return auo
+}
+
+// SetNillableModelNumber sets the "model_number" field if the given value is not nil.
+func (auo *AssetUpdateOne) SetNillableModelNumber(s *string) *AssetUpdateOne {
+	if s != nil {
+		auo.SetModelNumber(*s)
+	}
+	return auo
+}
+
+// ClearModelNumber clears the value of the "model_number" field.
+func (auo *AssetUpdateOne) ClearModelNumber() *AssetUpdateOne {
+	auo.mutation.ClearModelNumber()
+	return auo
+}
+
+// SetSerialNumber sets the "serial_number" field.
+func (auo *AssetUpdateOne) SetSerialNumber(s string) *AssetUpdateOne {
+	auo.mutation.SetSerialNumber(s)
+	return auo
+}
+
+// SetNillableSerialNumber sets the "serial_number" field if the given value is not nil.
+func (auo *AssetUpdateOne) SetNillableSerialNumber(s *string) *AssetUpdateOne {
+	if s != nil {
+		auo.SetSerialNumber(*s)
+	}
+	return auo
+}
+
+// ClearSerialNumber clears the value of the "serial_number" field.
+func (auo *AssetUpdateOne) ClearSerialNumber() *AssetUpdateOne {
+	auo.mutation.ClearSerialNumber()
 	return auo
 }
 
@@ -737,7 +829,18 @@ func (auo *AssetUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (auo *AssetUpdateOne) check() error {
+	if _, ok := auo.mutation.LocationID(); auo.mutation.LocationCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Asset.location"`)
+	}
+	return nil
+}
+
 func (auo *AssetUpdateOne) sqlSave(ctx context.Context) (_node *Asset, err error) {
+	if err := auo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(asset.Table, asset.Columns, sqlgraph.NewFieldSpec(asset.FieldID, field.TypeUUID))
 	id, ok := auo.mutation.ID()
 	if !ok {
@@ -766,8 +869,23 @@ func (auo *AssetUpdateOne) sqlSave(ctx context.Context) (_node *Asset, err error
 	if value, ok := auo.mutation.Name(); ok {
 		_spec.SetField(asset.FieldName, field.TypeString, value)
 	}
-	if auo.mutation.NameCleared() {
-		_spec.ClearField(asset.FieldName, field.TypeString)
+	if value, ok := auo.mutation.Quantity(); ok {
+		_spec.SetField(asset.FieldQuantity, field.TypeInt, value)
+	}
+	if value, ok := auo.mutation.AddedQuantity(); ok {
+		_spec.AddField(asset.FieldQuantity, field.TypeInt, value)
+	}
+	if value, ok := auo.mutation.ModelNumber(); ok {
+		_spec.SetField(asset.FieldModelNumber, field.TypeString, value)
+	}
+	if auo.mutation.ModelNumberCleared() {
+		_spec.ClearField(asset.FieldModelNumber, field.TypeString)
+	}
+	if value, ok := auo.mutation.SerialNumber(); ok {
+		_spec.SetField(asset.FieldSerialNumber, field.TypeString, value)
+	}
+	if auo.mutation.SerialNumberCleared() {
+		_spec.ClearField(asset.FieldSerialNumber, field.TypeString)
 	}
 	if auo.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{

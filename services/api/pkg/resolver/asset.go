@@ -7,6 +7,7 @@ package resolver
 import (
 	"context"
 	"things-api/ent"
+	"things-api/ent/asset"
 	"things-api/graph/generated"
 
 	"github.com/google/uuid"
@@ -20,6 +21,50 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input ent.CreateAsse
 // UpdateAsset is the resolver for the updateAsset field.
 func (r *mutationResolver) UpdateAsset(ctx context.Context, id uuid.UUID, input ent.UpdateAssetInput) (*ent.Asset, error) {
 	return r.client.Asset.UpdateOneID(id).SetInput(input).Save(ctx)
+}
+
+// DeleteAsset is the resolver for the deleteAsset field.
+func (r *mutationResolver) DeleteAsset(ctx context.Context, id uuid.UUID) (bool, error) {
+	var findAllassetsIDsToDelete func(assetID uuid.UUID, assetIDs []uuid.UUID) ([]uuid.UUID, error)
+	findAllassetsIDsToDelete = func(assetID uuid.UUID, assetIDs []uuid.UUID) ([]uuid.UUID, error) {
+		assetIDs = append(assetIDs, assetID)
+		asset, err := r.client.Asset.Query().
+			Where(asset.ID(assetID)).
+			WithChildren(func(q *ent.AssetQuery) {
+				q.WithChildren()
+			}).
+			Only(ctx)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, child := range asset.Edges.Children {
+			assetIDs = append(assetIDs, child.ID)
+			if child.Edges.Children != nil && len(child.Edges.Children) > 0 {
+				return findAllassetsIDsToDelete(child.ID, assetIDs)
+			}
+		}
+
+		return assetIDs, nil
+	}
+
+	assetIDs, err := findAllassetsIDsToDelete(id, []uuid.UUID{})
+	if err != nil {
+		return false, err
+	}
+
+	_, err = r.client.Asset.Delete().Where(asset.IDIn(assetIDs...)).Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// Asset is the resolver for the asset field.
+func (r *queryResolver) Asset(ctx context.Context, id uuid.UUID) (*ent.Asset, error) {
+	return r.client.Asset.Query().Where(asset.ID(id)).Only(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.

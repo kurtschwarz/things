@@ -33,7 +33,7 @@ func (a *Asset) Location(ctx context.Context) (*Location, error) {
 	if IsNotLoaded(err) {
 		result, err = a.QueryLocation().Only(ctx)
 	}
-	return result, MaskNotFound(err)
+	return result, err
 }
 
 func (a *Asset) Tags(ctx context.Context) (result []*Tag, err error) {

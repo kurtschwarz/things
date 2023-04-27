@@ -19,11 +19,17 @@ type Asset struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// ParentID holds the value of the "parent_id" field.
-	ParentID uuid.UUID `json:"parent_id,omitempty"`
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
 	// LocationID holds the value of the "location_id" field.
 	LocationID uuid.UUID `json:"location_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Quantity holds the value of the "quantity" field.
+	Quantity int `json:"quantity,omitempty"`
+	// ModelNumber holds the value of the "model_number" field.
+	ModelNumber string `json:"model_number,omitempty"`
+	// SerialNumber holds the value of the "serial_number" field.
+	SerialNumber string `json:"serial_number,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AssetQuery when eager-loading is set.
 	Edges        AssetEdges `json:"edges"`
@@ -111,9 +117,13 @@ func (*Asset) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case asset.FieldName:
+		case asset.FieldParentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case asset.FieldQuantity:
+			values[i] = new(sql.NullInt64)
+		case asset.FieldName, asset.FieldModelNumber, asset.FieldSerialNumber:
 			values[i] = new(sql.NullString)
-		case asset.FieldID, asset.FieldParentID, asset.FieldLocationID:
+		case asset.FieldID, asset.FieldLocationID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -137,10 +147,11 @@ func (a *Asset) assignValues(columns []string, values []any) error {
 				a.ID = *value
 			}
 		case asset.FieldParentID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
-			} else if value != nil {
-				a.ParentID = *value
+			} else if value.Valid {
+				a.ParentID = new(uuid.UUID)
+				*a.ParentID = *value.S.(*uuid.UUID)
 			}
 		case asset.FieldLocationID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -153,6 +164,24 @@ func (a *Asset) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				a.Name = value.String
+			}
+		case asset.FieldQuantity:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field quantity", values[i])
+			} else if value.Valid {
+				a.Quantity = int(value.Int64)
+			}
+		case asset.FieldModelNumber:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field model_number", values[i])
+			} else if value.Valid {
+				a.ModelNumber = value.String
+			}
+		case asset.FieldSerialNumber:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field serial_number", values[i])
+			} else if value.Valid {
+				a.SerialNumber = value.String
 			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
@@ -215,14 +244,25 @@ func (a *Asset) String() string {
 	var builder strings.Builder
 	builder.WriteString("Asset(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", a.ID))
-	builder.WriteString("parent_id=")
-	builder.WriteString(fmt.Sprintf("%v", a.ParentID))
+	if v := a.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("location_id=")
 	builder.WriteString(fmt.Sprintf("%v", a.LocationID))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(a.Name)
+	builder.WriteString(", ")
+	builder.WriteString("quantity=")
+	builder.WriteString(fmt.Sprintf("%v", a.Quantity))
+	builder.WriteString(", ")
+	builder.WriteString("model_number=")
+	builder.WriteString(a.ModelNumber)
+	builder.WriteString(", ")
+	builder.WriteString("serial_number=")
+	builder.WriteString(a.SerialNumber)
 	builder.WriteByte(')')
 	return builder.String()
 }

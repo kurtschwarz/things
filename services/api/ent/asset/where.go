@@ -70,6 +70,21 @@ func Name(v string) predicate.Asset {
 	return predicate.Asset(sql.FieldEQ(FieldName, v))
 }
 
+// Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
+func Quantity(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldEQ(FieldQuantity, v))
+}
+
+// ModelNumber applies equality check predicate on the "model_number" field. It's identical to ModelNumberEQ.
+func ModelNumber(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldEQ(FieldModelNumber, v))
+}
+
+// SerialNumber applies equality check predicate on the "serial_number" field. It's identical to SerialNumberEQ.
+func SerialNumber(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldEQ(FieldSerialNumber, v))
+}
+
 // ParentIDEQ applies the EQ predicate on the "parent_id" field.
 func ParentIDEQ(v uuid.UUID) predicate.Asset {
 	return predicate.Asset(sql.FieldEQ(FieldParentID, v))
@@ -118,16 +133,6 @@ func LocationIDIn(vs ...uuid.UUID) predicate.Asset {
 // LocationIDNotIn applies the NotIn predicate on the "location_id" field.
 func LocationIDNotIn(vs ...uuid.UUID) predicate.Asset {
 	return predicate.Asset(sql.FieldNotIn(FieldLocationID, vs...))
-}
-
-// LocationIDIsNil applies the IsNil predicate on the "location_id" field.
-func LocationIDIsNil() predicate.Asset {
-	return predicate.Asset(sql.FieldIsNull(FieldLocationID))
-}
-
-// LocationIDNotNil applies the NotNil predicate on the "location_id" field.
-func LocationIDNotNil() predicate.Asset {
-	return predicate.Asset(sql.FieldNotNull(FieldLocationID))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -185,16 +190,6 @@ func NameHasSuffix(v string) predicate.Asset {
 	return predicate.Asset(sql.FieldHasSuffix(FieldName, v))
 }
 
-// NameIsNil applies the IsNil predicate on the "name" field.
-func NameIsNil() predicate.Asset {
-	return predicate.Asset(sql.FieldIsNull(FieldName))
-}
-
-// NameNotNil applies the NotNil predicate on the "name" field.
-func NameNotNil() predicate.Asset {
-	return predicate.Asset(sql.FieldNotNull(FieldName))
-}
-
 // NameEqualFold applies the EqualFold predicate on the "name" field.
 func NameEqualFold(v string) predicate.Asset {
 	return predicate.Asset(sql.FieldEqualFold(FieldName, v))
@@ -203,6 +198,196 @@ func NameEqualFold(v string) predicate.Asset {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Asset {
 	return predicate.Asset(sql.FieldContainsFold(FieldName, v))
+}
+
+// QuantityEQ applies the EQ predicate on the "quantity" field.
+func QuantityEQ(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldEQ(FieldQuantity, v))
+}
+
+// QuantityNEQ applies the NEQ predicate on the "quantity" field.
+func QuantityNEQ(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldNEQ(FieldQuantity, v))
+}
+
+// QuantityIn applies the In predicate on the "quantity" field.
+func QuantityIn(vs ...int) predicate.Asset {
+	return predicate.Asset(sql.FieldIn(FieldQuantity, vs...))
+}
+
+// QuantityNotIn applies the NotIn predicate on the "quantity" field.
+func QuantityNotIn(vs ...int) predicate.Asset {
+	return predicate.Asset(sql.FieldNotIn(FieldQuantity, vs...))
+}
+
+// QuantityGT applies the GT predicate on the "quantity" field.
+func QuantityGT(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldGT(FieldQuantity, v))
+}
+
+// QuantityGTE applies the GTE predicate on the "quantity" field.
+func QuantityGTE(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldGTE(FieldQuantity, v))
+}
+
+// QuantityLT applies the LT predicate on the "quantity" field.
+func QuantityLT(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldLT(FieldQuantity, v))
+}
+
+// QuantityLTE applies the LTE predicate on the "quantity" field.
+func QuantityLTE(v int) predicate.Asset {
+	return predicate.Asset(sql.FieldLTE(FieldQuantity, v))
+}
+
+// ModelNumberEQ applies the EQ predicate on the "model_number" field.
+func ModelNumberEQ(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldEQ(FieldModelNumber, v))
+}
+
+// ModelNumberNEQ applies the NEQ predicate on the "model_number" field.
+func ModelNumberNEQ(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldNEQ(FieldModelNumber, v))
+}
+
+// ModelNumberIn applies the In predicate on the "model_number" field.
+func ModelNumberIn(vs ...string) predicate.Asset {
+	return predicate.Asset(sql.FieldIn(FieldModelNumber, vs...))
+}
+
+// ModelNumberNotIn applies the NotIn predicate on the "model_number" field.
+func ModelNumberNotIn(vs ...string) predicate.Asset {
+	return predicate.Asset(sql.FieldNotIn(FieldModelNumber, vs...))
+}
+
+// ModelNumberGT applies the GT predicate on the "model_number" field.
+func ModelNumberGT(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldGT(FieldModelNumber, v))
+}
+
+// ModelNumberGTE applies the GTE predicate on the "model_number" field.
+func ModelNumberGTE(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldGTE(FieldModelNumber, v))
+}
+
+// ModelNumberLT applies the LT predicate on the "model_number" field.
+func ModelNumberLT(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldLT(FieldModelNumber, v))
+}
+
+// ModelNumberLTE applies the LTE predicate on the "model_number" field.
+func ModelNumberLTE(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldLTE(FieldModelNumber, v))
+}
+
+// ModelNumberContains applies the Contains predicate on the "model_number" field.
+func ModelNumberContains(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldContains(FieldModelNumber, v))
+}
+
+// ModelNumberHasPrefix applies the HasPrefix predicate on the "model_number" field.
+func ModelNumberHasPrefix(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldHasPrefix(FieldModelNumber, v))
+}
+
+// ModelNumberHasSuffix applies the HasSuffix predicate on the "model_number" field.
+func ModelNumberHasSuffix(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldHasSuffix(FieldModelNumber, v))
+}
+
+// ModelNumberIsNil applies the IsNil predicate on the "model_number" field.
+func ModelNumberIsNil() predicate.Asset {
+	return predicate.Asset(sql.FieldIsNull(FieldModelNumber))
+}
+
+// ModelNumberNotNil applies the NotNil predicate on the "model_number" field.
+func ModelNumberNotNil() predicate.Asset {
+	return predicate.Asset(sql.FieldNotNull(FieldModelNumber))
+}
+
+// ModelNumberEqualFold applies the EqualFold predicate on the "model_number" field.
+func ModelNumberEqualFold(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldEqualFold(FieldModelNumber, v))
+}
+
+// ModelNumberContainsFold applies the ContainsFold predicate on the "model_number" field.
+func ModelNumberContainsFold(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldContainsFold(FieldModelNumber, v))
+}
+
+// SerialNumberEQ applies the EQ predicate on the "serial_number" field.
+func SerialNumberEQ(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldEQ(FieldSerialNumber, v))
+}
+
+// SerialNumberNEQ applies the NEQ predicate on the "serial_number" field.
+func SerialNumberNEQ(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldNEQ(FieldSerialNumber, v))
+}
+
+// SerialNumberIn applies the In predicate on the "serial_number" field.
+func SerialNumberIn(vs ...string) predicate.Asset {
+	return predicate.Asset(sql.FieldIn(FieldSerialNumber, vs...))
+}
+
+// SerialNumberNotIn applies the NotIn predicate on the "serial_number" field.
+func SerialNumberNotIn(vs ...string) predicate.Asset {
+	return predicate.Asset(sql.FieldNotIn(FieldSerialNumber, vs...))
+}
+
+// SerialNumberGT applies the GT predicate on the "serial_number" field.
+func SerialNumberGT(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldGT(FieldSerialNumber, v))
+}
+
+// SerialNumberGTE applies the GTE predicate on the "serial_number" field.
+func SerialNumberGTE(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldGTE(FieldSerialNumber, v))
+}
+
+// SerialNumberLT applies the LT predicate on the "serial_number" field.
+func SerialNumberLT(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldLT(FieldSerialNumber, v))
+}
+
+// SerialNumberLTE applies the LTE predicate on the "serial_number" field.
+func SerialNumberLTE(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldLTE(FieldSerialNumber, v))
+}
+
+// SerialNumberContains applies the Contains predicate on the "serial_number" field.
+func SerialNumberContains(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldContains(FieldSerialNumber, v))
+}
+
+// SerialNumberHasPrefix applies the HasPrefix predicate on the "serial_number" field.
+func SerialNumberHasPrefix(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldHasPrefix(FieldSerialNumber, v))
+}
+
+// SerialNumberHasSuffix applies the HasSuffix predicate on the "serial_number" field.
+func SerialNumberHasSuffix(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldHasSuffix(FieldSerialNumber, v))
+}
+
+// SerialNumberIsNil applies the IsNil predicate on the "serial_number" field.
+func SerialNumberIsNil() predicate.Asset {
+	return predicate.Asset(sql.FieldIsNull(FieldSerialNumber))
+}
+
+// SerialNumberNotNil applies the NotNil predicate on the "serial_number" field.
+func SerialNumberNotNil() predicate.Asset {
+	return predicate.Asset(sql.FieldNotNull(FieldSerialNumber))
+}
+
+// SerialNumberEqualFold applies the EqualFold predicate on the "serial_number" field.
+func SerialNumberEqualFold(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldEqualFold(FieldSerialNumber, v))
+}
+
+// SerialNumberContainsFold applies the ContainsFold predicate on the "serial_number" field.
+func SerialNumberContainsFold(v string) predicate.Asset {
+	return predicate.Asset(sql.FieldContainsFold(FieldSerialNumber, v))
 }
 
 // HasParent applies the HasEdge predicate on the "parent" edge.

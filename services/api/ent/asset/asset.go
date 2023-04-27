@@ -19,6 +19,12 @@ const (
 	FieldLocationID = "location_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldQuantity holds the string denoting the quantity field in the database.
+	FieldQuantity = "quantity"
+	// FieldModelNumber holds the string denoting the model_number field in the database.
+	FieldModelNumber = "model_number"
+	// FieldSerialNumber holds the string denoting the serial_number field in the database.
+	FieldSerialNumber = "serial_number"
 	// EdgeParent holds the string denoting the parent edge name in mutations.
 	EdgeParent = "parent"
 	// EdgeChildren holds the string denoting the children edge name in mutations.
@@ -66,6 +72,9 @@ var Columns = []string{
 	FieldParentID,
 	FieldLocationID,
 	FieldName,
+	FieldQuantity,
+	FieldModelNumber,
+	FieldSerialNumber,
 }
 
 var (
@@ -85,6 +94,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultQuantity holds the default value on creation for the "quantity" field.
+	DefaultQuantity int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -110,6 +121,21 @@ func ByLocationID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByQuantity orders the results by the quantity field.
+func ByQuantity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldQuantity, opts...).ToFunc()
+}
+
+// ByModelNumber orders the results by the model_number field.
+func ByModelNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldModelNumber, opts...).ToFunc()
+}
+
+// BySerialNumber orders the results by the serial_number field.
+func BySerialNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSerialNumber, opts...).ToFunc()
 }
 
 // ByParentField orders the results by parent field.

@@ -51,15 +51,18 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Asset struct {
-		AssetTags  func(childComplexity int) int
-		Children   func(childComplexity int) int
-		ID         func(childComplexity int) int
-		Location   func(childComplexity int) int
-		LocationID func(childComplexity int) int
-		Name       func(childComplexity int) int
-		Parent     func(childComplexity int) int
-		ParentID   func(childComplexity int) int
-		Tags       func(childComplexity int) int
+		AssetTags    func(childComplexity int) int
+		Children     func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Location     func(childComplexity int) int
+		LocationID   func(childComplexity int) int
+		ModelNumber  func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Parent       func(childComplexity int) int
+		ParentID     func(childComplexity int) int
+		Quantity     func(childComplexity int) int
+		SerialNumber func(childComplexity int) int
+		Tags         func(childComplexity int) int
 	}
 
 	AssetConnection struct {
@@ -114,6 +117,7 @@ type ComplexityRoot struct {
 		CreateLocation func(childComplexity int, input ent.CreateLocationInput) int
 		CreateTag      func(childComplexity int, input ent.CreateTagInput) int
 		CreateUser     func(childComplexity int, input ent.CreateUserInput) int
+		DeleteAsset    func(childComplexity int, id uuid.UUID) int
 		DeleteLocation func(childComplexity int, id uuid.UUID) int
 		UpdateAsset    func(childComplexity int, id uuid.UUID, input ent.UpdateAssetInput) int
 		UpdateLocation func(childComplexity int, id uuid.UUID, input ent.UpdateLocationInput) int
@@ -129,6 +133,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Asset     func(childComplexity int, id uuid.UUID) int
 		Assets    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.AssetWhereInput) int
 		Location  func(childComplexity int, id uuid.UUID) int
 		Locations func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.LocationWhereInput) int
@@ -182,6 +187,7 @@ type LocationResolver interface {
 type MutationResolver interface {
 	CreateAsset(ctx context.Context, input ent.CreateAssetInput) (*ent.Asset, error)
 	UpdateAsset(ctx context.Context, id uuid.UUID, input ent.UpdateAssetInput) (*ent.Asset, error)
+	DeleteAsset(ctx context.Context, id uuid.UUID) (bool, error)
 	CreateLocation(ctx context.Context, input ent.CreateLocationInput) (*ent.Location, error)
 	UpdateLocation(ctx context.Context, id uuid.UUID, input ent.UpdateLocationInput) (*ent.Location, error)
 	DeleteLocation(ctx context.Context, id uuid.UUID) (bool, error)
@@ -197,6 +203,7 @@ type QueryResolver interface {
 	Locations(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.LocationWhereInput) (*ent.LocationConnection, error)
 	Tags(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TagWhereInput) (*ent.TagConnection, error)
 	Users(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.UserWhereInput) (*ent.UserConnection, error)
+	Asset(ctx context.Context, id uuid.UUID) (*ent.Asset, error)
 	Location(ctx context.Context, id uuid.UUID) (*ent.Location, error)
 }
 
@@ -250,6 +257,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Asset.LocationID(childComplexity), true
 
+	case "Asset.modelNumber":
+		if e.complexity.Asset.ModelNumber == nil {
+			break
+		}
+
+		return e.complexity.Asset.ModelNumber(childComplexity), true
+
 	case "Asset.name":
 		if e.complexity.Asset.Name == nil {
 			break
@@ -270,6 +284,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Asset.ParentID(childComplexity), true
+
+	case "Asset.quantity":
+		if e.complexity.Asset.Quantity == nil {
+			break
+		}
+
+		return e.complexity.Asset.Quantity(childComplexity), true
+
+	case "Asset.serialNumber":
+		if e.complexity.Asset.SerialNumber == nil {
+			break
+		}
+
+		return e.complexity.Asset.SerialNumber(childComplexity), true
 
 	case "Asset.tags":
 		if e.complexity.Asset.Tags == nil {
@@ -508,6 +536,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(ent.CreateUserInput)), true
 
+	case "Mutation.deleteAsset":
+		if e.complexity.Mutation.DeleteAsset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteAsset_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteAsset(childComplexity, args["id"].(uuid.UUID)), true
+
 	case "Mutation.deleteLocation":
 		if e.complexity.Mutation.DeleteLocation == nil {
 			break
@@ -595,6 +635,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "Query.asset":
+		if e.complexity.Query.Asset == nil {
+			break
+		}
+
+		args, err := ec.field_Query_asset_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Asset(childComplexity, args["id"].(uuid.UUID)), true
 
 	case "Query.assets":
 		if e.complexity.Query.Assets == nil {
@@ -894,9 +946,14 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../asset.graphqls", Input: `extend type Mutation {
+	{Name: "../asset.graphqls", Input: `extend type Query {
+  asset(id: ID!): Asset!
+}
+
+extend type Mutation {
   createAsset(input: CreateAssetInput!): Asset!
   updateAsset(id: ID!, input: UpdateAssetInput!): Asset!
+  deleteAsset(id: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../ent.graphqls", Input: `directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
@@ -904,11 +961,14 @@ directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | 
 type Asset implements Node {
   id: ID!
   parentID: ID
-  locationID: ID
-  name: String
+  locationID: ID!
+  name: String!
+  quantity: Int!
+  modelNumber: String
+  serialNumber: String
   parent: Asset
   children: [Asset!]
-  location: Location
+  location: Location!
   tags: [Tag!]
   assetTags: [AssetTag!]
 }
@@ -982,8 +1042,6 @@ input AssetWhereInput {
   locationIDNEQ: ID
   locationIDIn: [ID!]
   locationIDNotIn: [ID!]
-  locationIDIsNil: Boolean
-  locationIDNotNil: Boolean
   """name field predicates"""
   name: String
   nameNEQ: String
@@ -996,10 +1054,49 @@ input AssetWhereInput {
   nameContains: String
   nameHasPrefix: String
   nameHasSuffix: String
-  nameIsNil: Boolean
-  nameNotNil: Boolean
   nameEqualFold: String
   nameContainsFold: String
+  """quantity field predicates"""
+  quantity: Int
+  quantityNEQ: Int
+  quantityIn: [Int!]
+  quantityNotIn: [Int!]
+  quantityGT: Int
+  quantityGTE: Int
+  quantityLT: Int
+  quantityLTE: Int
+  """model_number field predicates"""
+  modelNumber: String
+  modelNumberNEQ: String
+  modelNumberIn: [String!]
+  modelNumberNotIn: [String!]
+  modelNumberGT: String
+  modelNumberGTE: String
+  modelNumberLT: String
+  modelNumberLTE: String
+  modelNumberContains: String
+  modelNumberHasPrefix: String
+  modelNumberHasSuffix: String
+  modelNumberIsNil: Boolean
+  modelNumberNotNil: Boolean
+  modelNumberEqualFold: String
+  modelNumberContainsFold: String
+  """serial_number field predicates"""
+  serialNumber: String
+  serialNumberNEQ: String
+  serialNumberIn: [String!]
+  serialNumberNotIn: [String!]
+  serialNumberGT: String
+  serialNumberGTE: String
+  serialNumberLT: String
+  serialNumberLTE: String
+  serialNumberContains: String
+  serialNumberHasPrefix: String
+  serialNumberHasSuffix: String
+  serialNumberIsNil: Boolean
+  serialNumberNotNil: Boolean
+  serialNumberEqualFold: String
+  serialNumberContainsFold: String
   """parent edge predicates"""
   hasParent: Boolean
   hasParentWith: [AssetWhereInput!]
@@ -1021,10 +1118,13 @@ CreateAssetInput is used for create Asset object.
 Input was generated by ent.
 """
 input CreateAssetInput {
-  name: String
+  name: String!
+  quantity: Int
+  modelNumber: String
+  serialNumber: String
   parentID: ID
   childIDs: [ID!]
-  locationID: ID
+  locationID: ID!
   tagIDs: [ID!]
 }
 """
@@ -1334,14 +1434,17 @@ Input was generated by ent.
 """
 input UpdateAssetInput {
   name: String
-  clearName: Boolean
+  quantity: Int
+  modelNumber: String
+  clearModelNumber: Boolean
+  serialNumber: String
+  clearSerialNumber: Boolean
   parentID: ID
   clearParent: Boolean
   addChildIDs: [ID!]
   removeChildIDs: [ID!]
   clearChildren: Boolean
   locationID: ID
-  clearLocation: Boolean
   addTagIDs: [ID!]
   removeTagIDs: [ID!]
   clearTags: Boolean
@@ -1555,6 +1658,21 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteAsset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteLocation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1678,6 +1796,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_asset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2035,9 +2168,9 @@ func (ec *executionContext) _Asset_parentID(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(uuid.UUID)
+	res := resTmp.(*uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_parentID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2074,11 +2207,14 @@ func (ec *executionContext) _Asset_locationID(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_locationID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2115,6 +2251,94 @@ func (ec *executionContext) _Asset_name(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Asset_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Asset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Asset_quantity(ctx context.Context, field graphql.CollectedField, obj *ent.Asset) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Asset_quantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Asset_quantity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Asset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Asset_modelNumber(ctx context.Context, field graphql.CollectedField, obj *ent.Asset) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Asset_modelNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModelNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
 		return graphql.Null
 	}
 	res := resTmp.(string)
@@ -2122,7 +2346,48 @@ func (ec *executionContext) _Asset_name(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_modelNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Asset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Asset_serialNumber(ctx context.Context, field graphql.CollectedField, obj *ent.Asset) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Asset_serialNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SerialNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Asset_serialNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -2179,6 +2444,12 @@ func (ec *executionContext) fieldContext_Asset_parent(ctx context.Context, field
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -2240,6 +2511,12 @@ func (ec *executionContext) fieldContext_Asset_children(ctx context.Context, fie
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -2278,11 +2555,14 @@ func (ec *executionContext) _Asset_location(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*ent.Location)
 	fc.Result = res
-	return ec.marshalOLocation2ᚖthingsᚑapiᚋentᚐLocation(ctx, field.Selections, res)
+	return ec.marshalNLocation2ᚖthingsᚑapiᚋentᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2609,6 +2889,12 @@ func (ec *executionContext) fieldContext_AssetEdge_node(ctx context.Context, fie
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -2849,6 +3135,12 @@ func (ec *executionContext) fieldContext_AssetTag_asset(ctx context.Context, fie
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -3713,6 +4005,12 @@ func (ec *executionContext) fieldContext_Mutation_createAsset(ctx context.Contex
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -3788,6 +4086,12 @@ func (ec *executionContext) fieldContext_Mutation_updateAsset(ctx context.Contex
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -3810,6 +4114,61 @@ func (ec *executionContext) fieldContext_Mutation_updateAsset(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateAsset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteAsset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteAsset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteAsset(rctx, fc.Args["id"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteAsset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteAsset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -4810,6 +5169,87 @@ func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_asset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_asset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Asset(rctx, fc.Args["id"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Asset)
+	fc.Result = res
+	return ec.marshalNAsset2ᚖthingsᚑapiᚋentᚐAsset(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_asset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Asset_id(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Asset_parentID(ctx, field)
+			case "locationID":
+				return ec.fieldContext_Asset_locationID(ctx, field)
+			case "name":
+				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
+			case "parent":
+				return ec.fieldContext_Asset_parent(ctx, field)
+			case "children":
+				return ec.fieldContext_Asset_children(ctx, field)
+			case "location":
+				return ec.fieldContext_Asset_location(ctx, field)
+			case "tags":
+				return ec.fieldContext_Asset_tags(ctx, field)
+			case "assetTags":
+				return ec.fieldContext_Asset_assetTags(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_asset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_location(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_location(ctx, field)
 	if err != nil {
@@ -5141,6 +5581,12 @@ func (ec *executionContext) fieldContext_Tag_asset(ctx context.Context, field gr
 				return ec.fieldContext_Asset_locationID(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Asset_quantity(ctx, field)
+			case "modelNumber":
+				return ec.fieldContext_Asset_modelNumber(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_Asset_serialNumber(ctx, field)
 			case "parent":
 				return ec.fieldContext_Asset_parent(ctx, field)
 			case "children":
@@ -7813,7 +8259,7 @@ func (ec *executionContext) unmarshalInputAssetWhereInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "locationID", "locationIDNEQ", "locationIDIn", "locationIDNotIn", "locationIDIsNil", "locationIDNotNil", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameIsNil", "nameNotNil", "nameEqualFold", "nameContainsFold", "hasParent", "hasParentWith", "hasChildren", "hasChildrenWith", "hasLocation", "hasLocationWith", "hasTags", "hasTagsWith", "hasAssetTags", "hasAssetTagsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "locationID", "locationIDNEQ", "locationIDIn", "locationIDNotIn", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "quantity", "quantityNEQ", "quantityIn", "quantityNotIn", "quantityGT", "quantityGTE", "quantityLT", "quantityLTE", "modelNumber", "modelNumberNEQ", "modelNumberIn", "modelNumberNotIn", "modelNumberGT", "modelNumberGTE", "modelNumberLT", "modelNumberLTE", "modelNumberContains", "modelNumberHasPrefix", "modelNumberHasSuffix", "modelNumberIsNil", "modelNumberNotNil", "modelNumberEqualFold", "modelNumberContainsFold", "serialNumber", "serialNumberNEQ", "serialNumberIn", "serialNumberNotIn", "serialNumberGT", "serialNumberGTE", "serialNumberLT", "serialNumberLTE", "serialNumberContains", "serialNumberHasPrefix", "serialNumberHasSuffix", "serialNumberIsNil", "serialNumberNotNil", "serialNumberEqualFold", "serialNumberContainsFold", "hasParent", "hasParentWith", "hasChildren", "hasChildrenWith", "hasLocation", "hasLocationWith", "hasTags", "hasTagsWith", "hasAssetTags", "hasAssetTagsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7988,22 +8434,6 @@ func (ec *executionContext) unmarshalInputAssetWhereInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "locationIDIsNil":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationIDIsNil"))
-			it.LocationIDIsNil, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "locationIDNotNil":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationIDNotNil"))
-			it.LocationIDNotNil, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "name":
 			var err error
 
@@ -8092,22 +8522,6 @@ func (ec *executionContext) unmarshalInputAssetWhereInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "nameIsNil":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nameIsNil"))
-			it.NameIsNil, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nameNotNil":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nameNotNil"))
-			it.NameNotNil, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "nameEqualFold":
 			var err error
 
@@ -8121,6 +8535,310 @@ func (ec *executionContext) unmarshalInputAssetWhereInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nameContainsFold"))
 			it.NameContainsFold, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			it.Quantity, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityNEQ":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityNEQ"))
+			it.QuantityNEQ, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityIn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityIn"))
+			it.QuantityIn, err = ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityNotIn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityNotIn"))
+			it.QuantityNotIn, err = ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityGT":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityGT"))
+			it.QuantityGT, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityGTE":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityGTE"))
+			it.QuantityGTE, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityLT":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityLT"))
+			it.QuantityLT, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantityLTE":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityLTE"))
+			it.QuantityLTE, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumber"))
+			it.ModelNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberNEQ":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberNEQ"))
+			it.ModelNumberNEQ, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberIn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberIn"))
+			it.ModelNumberIn, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberNotIn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberNotIn"))
+			it.ModelNumberNotIn, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberGT":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberGT"))
+			it.ModelNumberGT, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberGTE":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberGTE"))
+			it.ModelNumberGTE, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberLT":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberLT"))
+			it.ModelNumberLT, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberLTE":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberLTE"))
+			it.ModelNumberLTE, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberContains":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberContains"))
+			it.ModelNumberContains, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberHasPrefix":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberHasPrefix"))
+			it.ModelNumberHasPrefix, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberHasSuffix":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberHasSuffix"))
+			it.ModelNumberHasSuffix, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberIsNil":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberIsNil"))
+			it.ModelNumberIsNil, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberNotNil":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberNotNil"))
+			it.ModelNumberNotNil, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberEqualFold":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberEqualFold"))
+			it.ModelNumberEqualFold, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumberContainsFold":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumberContainsFold"))
+			it.ModelNumberContainsFold, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumber"))
+			it.SerialNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberNEQ":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberNEQ"))
+			it.SerialNumberNEQ, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberIn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberIn"))
+			it.SerialNumberIn, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberNotIn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberNotIn"))
+			it.SerialNumberNotIn, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberGT":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberGT"))
+			it.SerialNumberGT, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberGTE":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberGTE"))
+			it.SerialNumberGTE, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberLT":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberLT"))
+			it.SerialNumberLT, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberLTE":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberLTE"))
+			it.SerialNumberLTE, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberContains":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberContains"))
+			it.SerialNumberContains, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberHasPrefix":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberHasPrefix"))
+			it.SerialNumberHasPrefix, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberHasSuffix":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberHasSuffix"))
+			it.SerialNumberHasSuffix, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberIsNil":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberIsNil"))
+			it.SerialNumberIsNil, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberNotNil":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberNotNil"))
+			it.SerialNumberNotNil, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberEqualFold":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberEqualFold"))
+			it.SerialNumberEqualFold, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumberContainsFold":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumberContainsFold"))
+			it.SerialNumberContainsFold, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8217,7 +8935,7 @@ func (ec *executionContext) unmarshalInputCreateAssetInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "parentID", "childIDs", "locationID", "tagIDs"}
+	fieldsInOrder := [...]string{"name", "quantity", "modelNumber", "serialNumber", "parentID", "childIDs", "locationID", "tagIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8228,7 +8946,31 @@ func (ec *executionContext) unmarshalInputCreateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quantity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			it.Quantity, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumber"))
+			it.ModelNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumber"))
+			it.SerialNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8252,7 +8994,7 @@ func (ec *executionContext) unmarshalInputCreateAssetInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationID"))
-			it.LocationID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			it.LocationID, err = ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9185,7 +9927,7 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "clearName", "parentID", "clearParent", "addChildIDs", "removeChildIDs", "clearChildren", "locationID", "clearLocation", "addTagIDs", "removeTagIDs", "clearTags"}
+	fieldsInOrder := [...]string{"name", "quantity", "modelNumber", "clearModelNumber", "serialNumber", "clearSerialNumber", "parentID", "clearParent", "addChildIDs", "removeChildIDs", "clearChildren", "locationID", "addTagIDs", "removeTagIDs", "clearTags"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9200,11 +9942,43 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
-		case "clearName":
+		case "quantity":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearName"))
-			it.ClearName, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			it.Quantity, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "modelNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelNumber"))
+			it.ModelNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearModelNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearModelNumber"))
+			it.ClearModelNumber, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serialNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serialNumber"))
+			it.SerialNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearSerialNumber":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearSerialNumber"))
+			it.ClearSerialNumber, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9253,14 +10027,6 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationID"))
 			it.LocationID, err = ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "clearLocation":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLocation"))
-			it.ClearLocation, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9913,9 +10679,30 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 
 			out.Values[i] = ec._Asset_locationID(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "name":
 
 			out.Values[i] = ec._Asset_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "quantity":
+
+			out.Values[i] = ec._Asset_quantity(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "modelNumber":
+
+			out.Values[i] = ec._Asset_modelNumber(ctx, field, obj)
+
+		case "serialNumber":
+
+			out.Values[i] = ec._Asset_serialNumber(ctx, field, obj)
 
 		case "parent":
 			field := field
@@ -9961,6 +10748,9 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Asset_location(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -10402,6 +11192,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "deleteAsset":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteAsset(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createLocation":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -10660,6 +11459,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_users(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "asset":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_asset(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12233,6 +13055,44 @@ func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface
 func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

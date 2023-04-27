@@ -27,11 +27,14 @@ export type Asset = Node & {
   assetTags?: Maybe<Array<AssetTag>>;
   children?: Maybe<Array<Asset>>;
   id: Scalars['ID'];
-  location?: Maybe<Location>;
-  locationID?: Maybe<Scalars['ID']>;
-  name?: Maybe<Scalars['String']>;
+  location: Location;
+  locationID: Scalars['ID'];
+  modelNumber?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
   parent?: Maybe<Asset>;
   parentID?: Maybe<Scalars['ID']>;
+  quantity: Scalars['Int'];
+  serialNumber?: Maybe<Scalars['String']>;
   tags?: Maybe<Array<Tag>>;
 };
 
@@ -116,10 +119,24 @@ export type AssetWhereInput = {
   /** location_id field predicates */
   locationID?: InputMaybe<Scalars['ID']>;
   locationIDIn?: InputMaybe<Array<Scalars['ID']>>;
-  locationIDIsNil?: InputMaybe<Scalars['Boolean']>;
   locationIDNEQ?: InputMaybe<Scalars['ID']>;
   locationIDNotIn?: InputMaybe<Array<Scalars['ID']>>;
-  locationIDNotNil?: InputMaybe<Scalars['Boolean']>;
+  /** model_number field predicates */
+  modelNumber?: InputMaybe<Scalars['String']>;
+  modelNumberContains?: InputMaybe<Scalars['String']>;
+  modelNumberContainsFold?: InputMaybe<Scalars['String']>;
+  modelNumberEqualFold?: InputMaybe<Scalars['String']>;
+  modelNumberGT?: InputMaybe<Scalars['String']>;
+  modelNumberGTE?: InputMaybe<Scalars['String']>;
+  modelNumberHasPrefix?: InputMaybe<Scalars['String']>;
+  modelNumberHasSuffix?: InputMaybe<Scalars['String']>;
+  modelNumberIn?: InputMaybe<Array<Scalars['String']>>;
+  modelNumberIsNil?: InputMaybe<Scalars['Boolean']>;
+  modelNumberLT?: InputMaybe<Scalars['String']>;
+  modelNumberLTE?: InputMaybe<Scalars['String']>;
+  modelNumberNEQ?: InputMaybe<Scalars['String']>;
+  modelNumberNotIn?: InputMaybe<Array<Scalars['String']>>;
+  modelNumberNotNil?: InputMaybe<Scalars['Boolean']>;
   /** name field predicates */
   name?: InputMaybe<Scalars['String']>;
   nameContains?: InputMaybe<Scalars['String']>;
@@ -130,12 +147,10 @@ export type AssetWhereInput = {
   nameHasPrefix?: InputMaybe<Scalars['String']>;
   nameHasSuffix?: InputMaybe<Scalars['String']>;
   nameIn?: InputMaybe<Array<Scalars['String']>>;
-  nameIsNil?: InputMaybe<Scalars['Boolean']>;
   nameLT?: InputMaybe<Scalars['String']>;
   nameLTE?: InputMaybe<Scalars['String']>;
   nameNEQ?: InputMaybe<Scalars['String']>;
   nameNotIn?: InputMaybe<Array<Scalars['String']>>;
-  nameNotNil?: InputMaybe<Scalars['Boolean']>;
   not?: InputMaybe<AssetWhereInput>;
   or?: InputMaybe<Array<AssetWhereInput>>;
   /** parent_id field predicates */
@@ -145,6 +160,31 @@ export type AssetWhereInput = {
   parentIDNEQ?: InputMaybe<Scalars['ID']>;
   parentIDNotIn?: InputMaybe<Array<Scalars['ID']>>;
   parentIDNotNil?: InputMaybe<Scalars['Boolean']>;
+  /** quantity field predicates */
+  quantity?: InputMaybe<Scalars['Int']>;
+  quantityGT?: InputMaybe<Scalars['Int']>;
+  quantityGTE?: InputMaybe<Scalars['Int']>;
+  quantityIn?: InputMaybe<Array<Scalars['Int']>>;
+  quantityLT?: InputMaybe<Scalars['Int']>;
+  quantityLTE?: InputMaybe<Scalars['Int']>;
+  quantityNEQ?: InputMaybe<Scalars['Int']>;
+  quantityNotIn?: InputMaybe<Array<Scalars['Int']>>;
+  /** serial_number field predicates */
+  serialNumber?: InputMaybe<Scalars['String']>;
+  serialNumberContains?: InputMaybe<Scalars['String']>;
+  serialNumberContainsFold?: InputMaybe<Scalars['String']>;
+  serialNumberEqualFold?: InputMaybe<Scalars['String']>;
+  serialNumberGT?: InputMaybe<Scalars['String']>;
+  serialNumberGTE?: InputMaybe<Scalars['String']>;
+  serialNumberHasPrefix?: InputMaybe<Scalars['String']>;
+  serialNumberHasSuffix?: InputMaybe<Scalars['String']>;
+  serialNumberIn?: InputMaybe<Array<Scalars['String']>>;
+  serialNumberIsNil?: InputMaybe<Scalars['Boolean']>;
+  serialNumberLT?: InputMaybe<Scalars['String']>;
+  serialNumberLTE?: InputMaybe<Scalars['String']>;
+  serialNumberNEQ?: InputMaybe<Scalars['String']>;
+  serialNumberNotIn?: InputMaybe<Array<Scalars['String']>>;
+  serialNumberNotNil?: InputMaybe<Scalars['Boolean']>;
 };
 
 /**
@@ -153,9 +193,12 @@ export type AssetWhereInput = {
  */
 export type CreateAssetInput = {
   childIDs?: InputMaybe<Array<Scalars['ID']>>;
-  locationID?: InputMaybe<Scalars['ID']>;
-  name?: InputMaybe<Scalars['String']>;
+  locationID: Scalars['ID'];
+  modelNumber?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
   parentID?: InputMaybe<Scalars['ID']>;
+  quantity?: InputMaybe<Scalars['Int']>;
+  serialNumber?: InputMaybe<Scalars['String']>;
   tagIDs?: InputMaybe<Array<Scalars['ID']>>;
 };
 
@@ -310,6 +353,7 @@ export type Mutation = {
   createLocation: Location;
   createTag: Tag;
   createUser: User;
+  deleteAsset: Scalars['Boolean'];
   deleteLocation: Scalars['Boolean'];
   updateAsset: Asset;
   updateLocation: Location;
@@ -335,6 +379,11 @@ export type MutationCreateTagArgs = {
 
 export type MutationCreateUserArgs = {
   input: CreateUserInput;
+};
+
+
+export type MutationDeleteAssetArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -401,6 +450,7 @@ export type PageInfo = {
 
 export type Query = {
   __typename?: 'Query';
+  asset: Asset;
   assets: AssetConnection;
   location: Location;
   locations: LocationConnection;
@@ -410,6 +460,11 @@ export type Query = {
   nodes: Array<Maybe<Node>>;
   tags: TagConnection;
   users: UserConnection;
+};
+
+
+export type QueryAssetArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -540,15 +595,18 @@ export type UpdateAssetInput = {
   addChildIDs?: InputMaybe<Array<Scalars['ID']>>;
   addTagIDs?: InputMaybe<Array<Scalars['ID']>>;
   clearChildren?: InputMaybe<Scalars['Boolean']>;
-  clearLocation?: InputMaybe<Scalars['Boolean']>;
-  clearName?: InputMaybe<Scalars['Boolean']>;
+  clearModelNumber?: InputMaybe<Scalars['Boolean']>;
   clearParent?: InputMaybe<Scalars['Boolean']>;
+  clearSerialNumber?: InputMaybe<Scalars['Boolean']>;
   clearTags?: InputMaybe<Scalars['Boolean']>;
   locationID?: InputMaybe<Scalars['ID']>;
+  modelNumber?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   parentID?: InputMaybe<Scalars['ID']>;
+  quantity?: InputMaybe<Scalars['Int']>;
   removeChildIDs?: InputMaybe<Array<Scalars['ID']>>;
   removeTagIDs?: InputMaybe<Array<Scalars['ID']>>;
+  serialNumber?: InputMaybe<Scalars['String']>;
 };
 
 /**
